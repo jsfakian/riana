@@ -16,7 +16,7 @@ from .forms import EmailOrUsernameAuthenticationForm, RegisterForm, CalcForm, Co
 from .tokens import activation_token
 from . import settings
 from django.contrib.auth.views import LoginView
-#import matlab.engine
+import matlab.engine
 
 # Register
 def register(request):
