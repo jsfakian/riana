@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Contact Us{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-12">
+  <div class="bg-white p-8 rounded-lg shadow-lg">
+    <h1 class="text-3xl font-semibold text-center mb-6">Contact Us</h1>
+    <form method="post" novalidate class="space-y-6">
+      {% csrf_token %}
+      {% for field in form %}
+        <div>
+          {{ field.label_tag }}  
+          {{ field|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+          {% for err in field.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ err }}</p>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <button type="submit"
+              class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
+        Send Message
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

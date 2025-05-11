@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Riana App{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@^2/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <!-- Navigation -->
+  <nav class="bg-white shadow">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="/" class="flex items-center">
+        <img src="{{ MEDIA_URL }}logo.png" alt="Riana Logo" class="h-10">
+      </a>
+      <div class="space-x-4">
+        {% if user.is_authenticated %}
+          <a href="{% url 'manual' %}" class="text-blue-600 hover:underline">Manual</a>
+          <a href="{% url 'contact' %}" class="text-blue-600 hover:underline">Contact</a>
+          <a href="{% url 'logout' %}"  class="text-red-600 hover:underline">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}"    class="text-blue-600 hover:underline">Login</a>
+          <a href="{% url 'contact' %}" class="text-blue-600 hover:underline">Contact</a>
+          <a href="{% url 'register' %}" class="text-blue-600 hover:underline">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer itemtype="https://schema.org/WPFooter" itemscope id="colophon" role="contentinfo" class="bg-yellow-300 border-t">
+    <div class="container mx-auto px-4 py-8 space-y-6 text-center">
+      <!-- EU Funding Logo and Text -->
+      <div class="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6" style="padding-bottom:0;padding-top:0;">
+        <img loading="lazy" src="https://riana-project.eu/wp-content/uploads/2024/02/EN_FundedbytheEU_RGB_Monochrome.png" alt="EU Horizon Europe Funding" class="h-12" />
+        <p class="text-blue-800 text-sm max-w-lg">
+          This project has received funding from the European Union's Horizon Europe research
+          and innovation programme under grant agreement No. 101130652.
+        </p>
+      </div>
+      <!-- Footer Credits -->
+      <div class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8">
+        <span class="text-gray-600 text-sm">Copyright © 2025 RIANA</span>
+
+        <div class="inline-block">
+          <!-- GreenGeeks Seal -->
+          <a href="#" onclick="ggs_ggseal()">
+            <img src="https://static.greengeeks.com/ggseal/Green_13.png" alt="GreenGeeks Seal" class="h-10" />
+          </a>
+          <script>
+            function ggs_ggseal() { window.open("https://my.greengeeks.com/seal/","_blank"); }
+          </script>
+        </div>
+
+        <span class="text-gray-600 text-sm">Powered by GreenGeeks</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

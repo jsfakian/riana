@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Manual{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto mt-8">
+        <h1 class="text-3xl font-semibold mb-4">User Manual</h1>
+        <div class="border rounded overflow-hidden shadow-lg" style="height:80vh;">
+            <embed 
+                src="{% url 'manual_url' %}" 
+                type="application/pdf" 
+                width="100%" 
+                height="100%" />
+        </div>
+        <p class="mt-4 text-center text-sm text-gray-600">
+            Or <a href="{{ manual_url }}" class="text-blue-600 hover:underline">
+                download the PDF
+            </a>.
+        </p>
+    </div>
+{% endblock %}

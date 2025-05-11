@@ -1,0 +1,10 @@
+Material :  Ag
+Substrate :  SiO2
+Thickness of First Layer (m) = 5.000000e-08
+Thickness of Substrate (m) = 1.000000e-07
+Pulse delay (s) = 0
+Wavelength (m) = 1.026000e-06
+Fluence (J/cm2) = 1.000000e-01
+Maximum Temperature on surface (K) = 5.213791e+02
+Melting Temperature (T_melt) (K) = 1234
+Ablation Temperature (T_ablation) (K) = 7315

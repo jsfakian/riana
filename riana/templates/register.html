@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Sign Up to Riana{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12">
+  <div class="bg-white p-8 rounded-lg shadow-lg">
+    <h1 class="text-3xl font-semibold text-center mb-6">Create an Account</h1>
+    <form method="post" novalidate class="space-y-6">
+      {% csrf_token %}
+
+      <div>
+        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
+        {{ form.username|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+        {% for error in form.username.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email</label>
+        {{ form.email|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+        {% for error in form.email.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
+        {{ form.password1|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+        {% for error in form.password1.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+        {{ form.password2|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+        {% for error in form.password2.errors %}
+          <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <button type="submit"
+              class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
+        Sign Up
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-sm text-gray-600">
+      Already have an account?
+      <a href="{% url 'login' %}" class="text-blue-500 hover:underline">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
