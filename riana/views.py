@@ -138,64 +138,60 @@ def calc(request):
             user_email = request.user.email
             username   = request.user.username
 
-            def background_job():
-                # 1) start MATLAB and cd into your code directory
-                eng = matlab.engine.start_matlab()
-                tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
-                eng.cd(tf_dir, nargout=0)
+            # 1) start MATLAB and cd into your code directory
+            eng = matlab.engine.start_matlab()
+            tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+            eng.cd(tf_dir, nargout=0)
 
-                # 2) run the calc script (no return value)
-                eng.calc(
-                    Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
-                    material, material_substrate, n1, k1, n2, k2,
-                    nargout=0
-                )
-                eng.quit()
+            # 2) run the calc script (no return value)
+            eng.calc(
+                Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
+                material, material_substrate, n1, k1, n2, k2,
+                nargout=0,
+                stdout=sys.stdout,
+                stderr=sys.stderr
+            )
+            eng.quit()
 
-                # 3) move the output folder into a user‐specific location
-                src_folder = os.path.join(settings.BASE_DIR, material)
-                user_dir   = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
-                os.makedirs(user_dir, exist_ok=True)
+            # 3) move the output folder into a user‐specific location
+            src_folder = os.path.join(settings.BASE_DIR, material)
+            user_dir   = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
+            os.makedirs(user_dir, exist_ok=True)
 
-                # generate a unique run name
-                ts     = datetime.now().strftime('%Y%m%d_%H%M%S')
-                params = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
-                run_name = f"{ts}_{material}_{params}"
-                dest_folder = os.path.join(user_dir, run_name)
+            # generate a unique run name
+            ts     = datetime.now().strftime('%Y%m%d_%H%M%S')
+            params = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
+            run_name = f"{ts}_{material}_{params}"
+            dest_folder = os.path.join(user_dir, run_name)
 
-                shutil.move(src_folder, dest_folder)
+            shutil.move(src_folder, dest_folder)
 
-                # 4) tarball it
-                tar_name = run_name + '.tar.gz'
-                tar_path = os.path.join(user_dir, tar_name)
-                with tarfile.open(tar_path, 'w:gz') as tz:
-                    tz.add(dest_folder, arcname=run_name)
+            # 4) tarball it
+            tar_name = run_name + '.tar.gz'
+            tar_path = os.path.join(user_dir, tar_name)
+            with tarfile.open(tar_path, 'w:gz') as tz:
+                tz.add(dest_folder, arcname=run_name)
 
-                # 5) build download link and email the user
-                download_url = request.build_absolute_uri(
-                    settings.MEDIA_URL + f"simulations/{user_id}/{tar_name}"
-                )
-                subject = 'Your Riana Simulation Results'
-                body = (
-                    f"Hello {username},\n\n"
-                    "Your simulation has completed with these parameters:\n"
-                    f"  • Material: {material}\n"
-                    f"  • Substrate: {material_substrate}\n"
-                    f"  • Thickness: {L1} nm\n"
-                    f"  • Fluence: {Ep1} J/cm²\n"
-                    f"  • Wavelength: {wavelength1} nm\n"
-                    f"  • Pulse Duration: {tp1} fs\n"
-                    f"  • Pulse Separation: {t_delay1} fs\n"
-                    f"  • Max Time: {t_max1} ps\n\n"
-                    f"Download your full results here:\n{download_url}\n\n"
-                    "Thank you for using Riana."
-                )
-                EmailMessage(subject, body, to=[user_email]).send()
-
-            # launch the background thread and immediately return to the user
-            #t = threading.Thread(target=background_job, daemon=True)
-            #t.start()
-            background_job()
+            # 5) build download link and email the user
+            download_url = request.build_absolute_uri(
+                settings.MEDIA_URL + f"simulations/{user_id}/{tar_name}"
+            )
+            subject = 'Your Riana Simulation Results'
+            body = (
+                f"Hello {username},\n\n"
+                "Your simulation has completed with these parameters:\n"
+                f"  • Material: {material}\n"
+                f"  • Substrate: {material_substrate}\n"
+                f"  • Thickness: {L1} nm\n"
+                f"  • Fluence: {Ep1} J/cm²\n"
+                f"  • Wavelength: {wavelength1} nm\n"
+                f"  • Pulse Duration: {tp1} fs\n"
+                f"  • Pulse Separation: {t_delay1} fs\n"
+                f"  • Max Time: {t_max1} ps\n\n"
+                f"Download your full results here:\n{download_url}\n\n"
+                "Thank you for using Riana."
+            )
+            EmailMessage(subject, body, to=[user_email]).send()
     else:
         form = CalcForm()
 
