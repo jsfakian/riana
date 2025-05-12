@@ -114,87 +114,90 @@ def manual_url(request):
 
 # MATLAB Calc (protected)
 @login_required
+
 def calc(request):
-    result = None
-    calc_flag = False
-    if request.method == 'POST':
-        form = CalcForm(request.POST)
-        if form.is_valid():
-            material = form.cleaned_data['Material']
-            material_substrate = form.cleaned_data['Substrate']
-            L1 = form.cleaned_data['thickness']
-            Ep1 = form.cleaned_data['fluence']
-            wavelength1 = form.cleaned_data['wavelength']
-            tp1 = form.cleaned_data['pulse_dur']
-            t_delay1 = form.cleaned_data['pulse_sep']
-            t_max1 = form.cleaned_data['max_time']
-            n1 = form.cleaned_data['n1']
-            k1 = form.cleaned_data['k1']
-            n2 = form.cleaned_data['n2']
-            k2 = form.cleaned_data['k2']
+    # Parse all your inputs from request.POST or request.GET
+    Ep1               = float(request.POST['fluence'])
+    wavelength1       = float(request.POST['wavelength'])
+    tp1               = float(request.POST['pulse_dur'])
+    t_delay1          = float(request.POST['pulse_sep'])
+    t_max1            = float(request.POST['max_time'])
+    L1                = float(request.POST['thickness'])
+    material          = request.POST['material']
+    material_substrate= request.POST['substrate']
+    n1, k1            = map(float, request.POST['n1']), map(float, request.POST['k1'])
+    n2, k2            = map(float, request.POST['n2']), map(float, request.POST['k2'])
 
-            # --- Call MATLAB function ---
-            eng = matlab.engine.start_matlab()
-            tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
-            eng.cd(tf_dir, nargout=0)
+    user_id = request.user.id
+    user_email = request.user.email
+    username = request.user.username
 
-            eng.calc(
-                Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
-                material, material_substrate, n1, k1, n2, k2,
-                nargout=0
-            )
-            eng.quit()
+    def background_job():
+        # --- Call MATLAB function ---
+        eng = matlab.engine.start_matlab()
+        tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+        eng.cd(tf_dir, nargout=0)
 
-            # assume MATLAB wrote to BASE_DIR/<material>/
-            src_folder = os.path.join(settings.BASE_DIR, material)
+        # no outputs, we just let calc write its files
+        eng.calc(
+            Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
+            material, material_substrate, n1, k1, n2, k2,
+            nargout=0
+        )
+        eng.quit()
 
-            # prepare user‐specific directory
-            user_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', str(request.user.id))
-            os.makedirs(user_dir, exist_ok=True)
+        # assume MATLAB wrote to BASE_DIR/<material>/
+        src_folder = os.path.join(settings.BASE_DIR, material)
 
-            # build a unique name
-            ts     = datetime.now().strftime('%Y%m%d_%H%M%S')
-            params = f"t{thickness}_f{fluence}_wl{wavelength}_pd{pulse_dur}_ps{pulse_sep}_mt{max_time}"
-            new_name = f"{ts}_{material}_{params}"
+        # prepare user‐specific directory
+        user_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
+        os.makedirs(user_dir, exist_ok=True)
 
-            dest_folder = os.path.join(user_dir, new_name)
-            shutil.move(src_folder, dest_folder)
+        # build a unique name
+        ts     = datetime.now().strftime('%Y%m%d_%H%M%S')
+        params = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
+        new_name = f"{ts}_{material}_{params}"
 
-            # --- Create tar.gz ---
-            tar_name = new_name + '.tar.gz'
-            tar_path = os.path.join(user_dir, tar_name)
-            with tarfile.open(tar_path, 'w:gz') as tz:
-                tz.add(dest_folder, arcname=new_name)
+        dest_folder = os.path.join(user_dir, new_name)
+        shutil.move(src_folder, dest_folder)
 
-            # --- Build download URL ---
-            download_url = request.build_absolute_uri(
-                settings.MEDIA_URL + f"simulations/{request.user.id}/{tar_name}"
-            )
+        # --- Create tar.gz ---
+        tar_name = new_name + '.tar.gz'
+        tar_path = os.path.join(user_dir, tar_name)
+        with tarfile.open(tar_path, 'w:gz') as tz:
+            tz.add(dest_folder, arcname=new_name)
 
-            # --- Email the user ---
-            subject = 'Your Riana Simulation Results'
-            body = (
-                f"Hello {request.user.username},\n\n"
-                "Your simulation has completed with these parameters:\n"
-                f"  • Material: {material}\n"
-                f"  • Substrate: {substrate}\n"
-                f"  • Thickness: {thickness} nm\n"
-                f"  • Fluence: {fluence} J/cm²\n"
-                f"  • Wavelength: {wavelength} nm\n"
-                f"  • Pulse Duration: {pulse_dur} fs\n"
-                f"  • Pulse Separation: {pulse_sep} fs\n"
-                f"  • Max Time: {max_time} ps\n\n"
-                f"Download your full results here:\n{download_url}\n\n"
-                "Thank you for using Riana."
-            )
-            EmailMessage(subject, body, to=[request.user.email]).send()
+        # --- Build download URL ---
+        download_url = request.build_absolute_uri(
+            settings.MEDIA_URL + f"simulations/{user_id}/{tar_name}"
+        )
+
+        # --- Email the user ---
+        subject = 'Your Riana Simulation Results'
+        body = (
+            f"Hello {username},\n\n"
+            "Your simulation has completed with these parameters:\n"
+            f"  • Material: {material}\n"
+            f"  • Substrate: {material_substrate}\n"
+            f"  • Thickness: {L1} nm\n"
+            f"  • Fluence: {Ep1} J/cm²\n"
+            f"  • Wavelength: {wavelength1} nm\n"
+            f"  • Pulse Duration: {tp1} fs\n"
+            f"  • Pulse Separation: {t_delay1} fs\n"
+            f"  • Max Time: {t_max1} ps\n\n"
+            f"Download your full results here:\n{download_url}\n\n"
+            "Thank you for using Riana."
+        )
+        EmailMessage(subject, body, to=[user_email]).send()
     else:
         form = CalcForm()
-    return render(
-        request,
-        'calc.html',
-        {'form': form, 'result': result, 'calc': calc_flag}
-    )
+    
+    # kick off the thread (daemon=True won't block Django shutdown)
+    t = threading.Thread(target=background_job, daemon=True)
+    t.start()
+
+    # immediately return a :202 Accepted" or similar
+    return JsonResponse({'status': 'started'}, status=202)
 
 def contact(request):
     if request.method == 'POST':
