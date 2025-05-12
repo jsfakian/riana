@@ -135,6 +135,9 @@ def calc(request):
 
             # --- Call MATLAB function ---
             eng = matlab.engine.start_matlab()
+            tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+            eng.addpath(tf_dir, nargout=0)
+
             result = eng.calc(
                 Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
                 material, material_substrate, n1, k1, n2, k2,
