@@ -1,4 +1,4 @@
-import os, shutil, tarfile, threading, io
+import os, shutil, tarfile, threading
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -115,12 +115,13 @@ def manual_url(request):
 # MATLAB Calc (protected)
 @login_required
 def calc(request):
-    result = None
+    form = CalcForm()
+    started = False
 
     if request.method == 'POST':
         form = CalcForm(request.POST)
         if form.is_valid():
-            # pull out all your form data
+            # extract cleaned data
             material           = form.cleaned_data['Material']
             material_substrate = form.cleaned_data['Substrate']
             L1                 = form.cleaned_data['thickness']
@@ -137,73 +138,70 @@ def calc(request):
             user_id    = request.user.id
             user_email = request.user.email
             username   = request.user.username
-            
-            buf = io.StringIO()
 
-            # 1) start MATLAB and cd into your code directory
-            eng = matlab.engine.start_matlab()
-            tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
-            eng.cd(tf_dir, nargout=0)
+            # capture a base URL for later use
+            base_url = request.build_absolute_uri('/')[:-1]  # strip trailing slash
 
-            # 2) run the calc script (no return value)
-            eng.calc(
-                Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
-                material, material_substrate, n1, k1, n2, k2,
-                nargout=0,
-                stdout=buf,
-                stderr=buf
-            )
-            print("=== MATLAB OUTPUT ===")
-            print(buf.getvalue())
-            eng.quit()
+            def background_job():
+                # 1. Run MATLAB
+                eng = matlab.engine.start_matlab()
+                tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+                eng.cd(tf_dir, nargout=0)
+                eng.calc(
+                    Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
+                    material, material_substrate, n1, k1, n2, k2,
+                    nargout=0
+                )
+                eng.quit()
 
-            # 3) move the output folder into a user‐specific location
-            src_folder = os.path.join(settings.BASE_DIR, material)
-            user_dir   = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
-            os.makedirs(user_dir, exist_ok=True)
+                # 2. Move results
+                src = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s', material)
+                user_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
+                os.makedirs(user_dir, exist_ok=True)
+                ts       = datetime.now().strftime('%Y%m%d_%H%M%S')
+                params   = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
+                run_name = f"{ts}_{material}_{params}"
+                dest     = os.path.join(user_dir, run_name)
+                shutil.move(src, dest)
 
-            # generate a unique run name
-            ts     = datetime.now().strftime('%Y%m%d_%H%M%S')
-            params = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
-            run_name = f"{ts}_{material}_{params}"
-            dest_folder = os.path.join(user_dir, run_name)
+                # 3. Tarball
+                tar_name = run_name + '.tar.gz'
+                tar_path = os.path.join(user_dir, tar_name)
+                with tarfile.open(tar_path, 'w:gz') as tz:
+                    tz.add(dest, arcname=run_name)
 
-            shutil.move(src_folder, dest_folder)
+                # 4. Email
+                download_url = f"{base_url}{settings.MEDIA_URL}simulations/{user_id}/{tar_name}"
+                subject = 'Your Riana Simulation Results'
+                body    = (
+                    f"Hello {username},\n\n"
+                    "Your simulation has completed with these parameters:\n"
+                    f"  • Material: {material}\n"
+                    f"  • Substrate: {material_substrate}\n"
+                    f"  • Thickness: {L1} nm\n"
+                    f"  • Fluence: {Ep1} J/cm²\n"
+                    f"  • Wavelength: {wavelength1} nm\n"
+                    f"  • Pulse Duration: {tp1} fs\n"
+                    f"  • Pulse Separation: {t_delay1} fs\n"
+                    f"  • Max Time: {t_max1} ps\n\n"
+                    f"Download your full results here:\n{download_url}\n\n"
+                    "Thank you for using Riana."
+                )
+                EmailMessage(subject, body, to=[user_email]).send()
 
-            # 4) tarball it
-            tar_name = run_name + '.tar.gz'
-            tar_path = os.path.join(user_dir, tar_name)
-            with tarfile.open(tar_path, 'w:gz') as tz:
-                tz.add(dest_folder, arcname=run_name)
+            # launch the background thread
+            thread = threading.Thread(target=background_job, daemon=True)
+            thread.start()
 
-            # 5) build download link and email the user
-            download_url = request.build_absolute_uri(
-                settings.MEDIA_URL + f"simulations/{user_id}/{tar_name}"
-            )
-            subject = 'Your Riana Simulation Results'
-            body = (
-                f"Hello {username},\n\n"
-                "Your simulation has completed with these parameters:\n"
-                f"  • Material: {material}\n"
-                f"  • Substrate: {material_substrate}\n"
-                f"  • Thickness: {L1} nm\n"
-                f"  • Fluence: {Ep1} J/cm²\n"
-                f"  • Wavelength: {wavelength1} nm\n"
-                f"  • Pulse Duration: {tp1} fs\n"
-                f"  • Pulse Separation: {t_delay1} fs\n"
-                f"  • Max Time: {t_max1} ps\n\n"
-                f"Download your full results here:\n{download_url}\n\n"
-                "Thank you for using Riana."
-            )
-            EmailMessage(subject, body, to=[user_email]).send()
-    else:
-        form = CalcForm()
+            # mark that we kicked off work and clear the form
+            started = True
+            form = CalcForm()
 
     return render(request, 'calc.html', {
         'form': form,
-        'result': result,
+        'started': started,
     })
-
+    
 def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
