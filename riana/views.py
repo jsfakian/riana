@@ -16,7 +16,7 @@ from .forms import EmailOrUsernameAuthenticationForm, RegisterForm, CalcForm, Co
 from .tokens import activation_token
 from . import settings
 from django.contrib.auth.views import LoginView
-#import matlab.engine
+import matlab.engine
 
 # Register
 def register(request):
@@ -121,32 +121,29 @@ def calc(request):
         form = CalcForm(request.POST)
         if form.is_valid():
             material = form.cleaned_data['Material']
-            substrate = form.cleaned_data['Substrate']
-            thickness = form.cleaned_data['thickness']
-            fluence = form.cleaned_data['fluence']
-            wavelength = form.cleaned_data['wavelength']
-            pulse_dur = form.cleaned_data['pulse_dur']
-            pulse_sep = form.cleaned_data['pulse_sep']
-            max_time = form.cleaned_data['max_time']
-            print(material, substrate, thickness, fluence, wavelength, pulse_dur, pulse_sep, max_time)
-            calc_flag = form.cleaned_data.get('calc', False)
-            #if calc_flag:
-            #    eng = matlab.engine.start_matlab()
-            #    # Call MATLAB function with all parameters
-            #    result = eng.mycalc(
-            #        material,
-            #        substrate,
-            #        thickness,
-            #        fluence,
-            #        wavelength,
-            #        pulse_dur,
-            #        pulse_sep,
-            #        max_time
-            #    )
-            #    eng.quit()
+            material_substrate = form.cleaned_data['Substrate']
+            L1 = form.cleaned_data['thickness']
+            Ep1 = form.cleaned_data['fluence']
+            wavelength1 = form.cleaned_data['wavelength']
+            tp1 = form.cleaned_data['pulse_dur']
+            t_delay1 = form.cleaned_data['pulse_sep']
+            t_max1 = form.cleaned_data['max_time']
+            n1 = form.cleaned_data['n1']
+            k1 = form.cleaned_data['k1']
+            n2 = form.cleaned_data['n2']
+            k2 = form.cleaned_data['k2']
+
+            # --- Call MATLAB function ---
+            eng = matlab.engine.start_matlab()
+            result = eng.mycalc(
+                Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
+                material, material_substrate, n1, k1, n2, k2,
+                nargout=1
+            )
+            eng.quit()
+
             # assume MATLAB wrote to BASE_DIR/<material>/
             src_folder = os.path.join(settings.BASE_DIR, material)
-            os.makedirs(src_folder, exist_ok=True) # remove this on production
 
             # prepare user‐specific directory
             user_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', str(request.user.id))
