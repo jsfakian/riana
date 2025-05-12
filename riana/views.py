@@ -1,4 +1,4 @@
-import os, shutil, tarfile, threading, sys
+import os, shutil, tarfile, threading, io
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -137,6 +137,8 @@ def calc(request):
             user_id    = request.user.id
             user_email = request.user.email
             username   = request.user.username
+            
+            buf = io.StringIO()
 
             # 1) start MATLAB and cd into your code directory
             eng = matlab.engine.start_matlab()
@@ -148,9 +150,11 @@ def calc(request):
                 Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
                 material, material_substrate, n1, k1, n2, k2,
                 nargout=0,
-                stdout=sys.stdout,
-                stderr=sys.stderr
+                stdout=buf,
+                stderr=buf
             )
+            print("=== MATLAB OUTPUT ===")
+            print(buf.getvalue())
             eng.quit()
 
             # 3) move the output folder into a user‐specific location
