@@ -116,7 +116,6 @@ def manual_url(request):
 @login_required
 def calc(request):
     result = None
-    calc_flag = False
 
     if request.method == 'POST':
         form = CalcForm(request.POST)
@@ -194,17 +193,15 @@ def calc(request):
                 EmailMessage(subject, body, to=[user_email]).send()
 
             # launch the background thread and immediately return to the user
-            t = threading.Thread(target=background_job, daemon=True)
-            t.start()
-            calc_flag = True
-
+            #t = threading.Thread(target=background_job, daemon=True)
+            #t.start()
+            background_job()
     else:
         form = CalcForm()
 
     return render(request, 'calc.html', {
         'form': form,
         'result': result,
-        'calc': calc_flag,
     })
 
 def contact(request):
