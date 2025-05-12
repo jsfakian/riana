@@ -1,5 +1,5 @@
 % Usage from MATLAB:
-%   result = calc(Ep1, wavelength1, tp1, t_delay1, t_max1, L1, ...
+%   calc(Ep1, wavelength1, tp1, t_delay1, t_max1, L1, ...
 %                   material, material_substrate, n1, k1, n2, k2);
 %
 % Inputs:
@@ -14,10 +14,8 @@
 %   n1, k1             - optical constants for the film
 %   n2, k2             - optical constants for the substrate
 %
-% Output:
-%   result             - whatever your Code_for_* routines return
 
-function result = calc( ...
+function calc( ...
     Ep1, wavelength1, tp1, t_delay1, t_max1, L1, ...
     material, material_substrate, n1, k1, n2, k2)
 
@@ -85,17 +83,17 @@ function result = calc( ...
     % Dispatch
     if any(strcmp(material, {'Au','Cu','Cr','Ag','W','Al','Mo'})) && ~isBigDelay
         % Use the single-metal backend
-        result = Code_for_all_metals_but_two( ...
+        Code_for_all_metals_but_two( ...
             Ep1, wavelength1, tp1, t_delay1, t_max1, ...
             material, material_substrate, L1);
     elseif isTwoMetalRoutine
         % Use the two-metal / delayed backend
-        result = Code_for_two( ...
+        Code_for_two( ...
             Ep1, wavelength1, tp1, t_delay1, t_max1, ...
             material, material_substrate, L1);
-    else
-        % No matching routine
-        warning('No simulation routine for material=%s, delay=%g fs', material, t_delay1);
-        result = [];
+    %else
+    %    % No matching routine
+    %    warning('No simulation routine for material=%s, delay=%g fs', material, t_delay1);
+    %    result = [];
     end
 end
