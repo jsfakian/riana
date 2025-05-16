@@ -140,18 +140,18 @@ REST_FRAMEWORK = {
 
 # Use SMTP backend for real email delivery
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'        # e.g. 'smtp.gmail.com'
-EMAIL_PORT = 587                       # or 465 for SSL
+EMAIL_HOST = 'mail.iesl.forth.gr'        # e.g. 'smtp.gmail.com'
+EMAIL_PORT = 25                       # or 465 for SSL
 EMAIL_USE_TLS = True                   # False if using SSL on 465
 # EMAIL_USE_SSL = True                 # instead of USE_TLS if you prefer SSL
 
 # Where to send contact‐form submissions
-ADMIN_EMAIL = 'myrenkost@gmail.com'
+ADMIN_EMAIL = 'jsfakian@iesl.forth.gr'
 
-EMAIL_HOST_USER = 'myrenkost@gmail.com'      # your SMTP login
-EMAIL_HOST_PASSWORD = 'igid vztk pcph pvsp'  # your SMTP password or app-specific token
+EMAIL_HOST_USER = 'jsfakian@iesl.forth.gr'      # your SMTP login
+EMAIL_HOST_PASSWORD = 'T0PoU!@k1'  # your SMTP password or app-specific token
 
-DEFAULT_FROM_EMAIL = 'no-reply@gmail.com'
+DEFAULT_FROM_EMAIL = 'riana@iesl.forth.gr'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL      # sender address for error emails
 
 # Optional: adjust timeout and connection reuse
