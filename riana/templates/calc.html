@@ -109,7 +109,7 @@
     const mt = document.getElementById('id_max_time');
     //console.log('pulse_dur:', pd, 'pulse_sep:', ps, 'mt:', mt.value);
     const minAllowed = 2 * pd;
-    const maxAllowed = 30 * (ps + 12 * ps) / 1000;
+    const maxAllowed = 30 * (ps + 12 * pd) / 1000;
     mt.setAttribute('min', minAllowed);
     mt.setAttribute('max', maxAllowed);
   }
