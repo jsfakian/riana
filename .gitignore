@@ -3,3 +3,4 @@ riana/__pycache__/
 venv/
 media/simulations
 nohup.out
+.env

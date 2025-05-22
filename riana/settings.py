@@ -9,34 +9,24 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
-from pathlib import Path
 import os
+from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = os.environ.get('DEBUG')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7gem%2nl@o&_6k-^0hoq&881$v!f+*0(9^z1li0x3!0h9i&x0j'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+# Hosts and CSRF
 ALLOWED_HOSTS = ["147.52.71.221", "localhost", "192.168.1.23", "riana-hub.iesl.forth.gr"]
-
 CSRF_TRUSTED_ORIGINS = [
-    'https://riana.nffa-modeling.iesl.forth.gr',
+    'https://riana-hub.iesl.forth.gr',
 ]
 
-# treat X-Forwarded-Proto: https as "this is secure"
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
+print(ALLOWED_HOSTS)
 # Application definition
-
 INSTALLED_APPS = [
     'riana',
     'widget_tweaks',
@@ -63,7 +53,7 @@ ROOT_URLCONF = 'riana.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'riana' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -78,10 +68,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'riana.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database (SQLite for development)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -89,83 +76,55 @@ DATABASES = {
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+# Static files
 STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-TEMPLATES[0]['DIRS'] = [BASE_DIR / 'riana' / 'templates']
-
+# Authentication URLs
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'calc'
 LOGOUT_REDIRECT_URL = 'login'
 
-# REST framework + JWT settings
+# REST framework + JWT
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
 
-# Use SMTP backend for real email delivery
+# Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.iesl.forth.gr'        # e.g. 'smtp.gmail.com'
-EMAIL_PORT = 25                       # or 465 for SSL
-# EMAIL_USE_TLS = True                   # False if using SSL on 465
-# EMAIL_USE_SSL = True                 # instead of USE_TLS if you prefer SSL
-
-# Where to send contact‐form submissions
-ADMIN_EMAIL = 'jsfakian@iesl.forth.gr'
-
-EMAIL_HOST_USER = 'jsfakian@iesl.forth.gr'      # your SMTP login
-EMAIL_HOST_PASSWORD = '8BGrJQx8pIA7'  # your SMTP password or app-specific token
-
-DEFAULT_FROM_EMAIL = 'riana@iesl.forth.gr'
-SERVER_EMAIL = DEFAULT_FROM_EMAIL      # sender address for error emails
-
-# Optional: adjust timeout and connection reuse
-EMAIL_TIMEOUT = 10                     # seconds
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = os.environ.get('EMAIL_PORT')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+EMAIL_TIMEOUT = 10
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
 
-MEDIA_URL  = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Allow pages to be embedded in frames when served from the same origin
+# Media files
+MEDIA_URL = os.environ.get('MEDIA_URL')
+MEDIA_ROOT = BASE_DIR / os.environ.get('MEDIA_ROOT')
+
+# Security headers
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+

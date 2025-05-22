@@ -12,6 +12,7 @@ cd "$SCRIPT_DIR"
 # Activate it
 # shellcheck source=/dev/null
 source venv/bin/activate
+source .env
 
 # Stop any running Django dev server on port 8000
 PORT=8001
