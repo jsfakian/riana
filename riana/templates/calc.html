@@ -6,10 +6,10 @@
 <div class="max-w-3xl mx-auto">
   <h1 class="text-3xl font-semibold text-center mb-6">Simulation Calculator</h1>
 
-  {# — Show a banner if we’ve kicked off a background run — #}
+  {# — Show a banner if we've kicked off a background run — #}
   {% if started %}
     <div class="mb-6 p-4 rounded-lg bg-green-100 border border-green-200 text-green-800">
-      Your simulation is running in the background – you’ll receive an email when it’s done.
+      Your simulation is running in the background - you'll receive an email when it's done.
     </div>
   {% endif %}
 
@@ -48,7 +48,8 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700">Fluence (J/cm²)</label>
-        {{ form.fluence|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+        {{ form.fluence|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"min=0.01 max=0.9 step=0.01" }}
+        {% if form.fluence.help_text %}<p class="text-xs text-gray-500">{{ form.fluence.help_text }}</p>{% endif %}
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700">Wavelength (nm)</label>
@@ -108,7 +109,7 @@
     const mt = document.getElementById('id_max_time');
     //console.log('pulse_dur:', pd, 'pulse_sep:', ps, 'mt:', mt.value);
     const minAllowed = 2 * pd;
-    const maxAllowed = 2 * pd + 10 * ps;
+    const maxAllowed = 30 * (ps + 12 * ps) / 1000;
     mt.setAttribute('min', minAllowed);
     mt.setAttribute('max', maxAllowed);
   }
