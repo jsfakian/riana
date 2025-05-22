@@ -110,16 +110,21 @@ REST_FRAMEWORK = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_PORT = os.environ.get('EMAIL_PORT')
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+#EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+#EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+EMAIL_HOST_USER = os.environ.get('ADMIN_EMAIL')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
 EMAIL_TIMEOUT = 10
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
+
+#print(EMAIL_HOST)
+#print(EMAIL_PORT)
+#print(EMAIL_USER)
+#print(EMAIL_PASSWORD)
 
 # Media files
 MEDIA_URL = os.environ.get('MEDIA_URL')
