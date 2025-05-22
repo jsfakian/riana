@@ -26,8 +26,14 @@ SECRET_KEY = 'django-insecure-7gem%2nl@o&_6k-^0hoq&881$v!f+*0(9^z1li0x3!0h9i&x0j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["147.52.71.221", "localhost", "192.168.1.23"]
+ALLOWED_HOSTS = ["147.52.71.221", "localhost", "192.168.1.23", "riana-hub.iesl.forth.gr"]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://riana.nffa-modeling.iesl.forth.gr',
+]
+
+# treat X-Forwarded-Proto: https as "this is secure"
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
@@ -142,14 +148,14 @@ REST_FRAMEWORK = {
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'mail.iesl.forth.gr'        # e.g. 'smtp.gmail.com'
 EMAIL_PORT = 25                       # or 465 for SSL
-EMAIL_USE_TLS = True                   # False if using SSL on 465
+# EMAIL_USE_TLS = True                   # False if using SSL on 465
 # EMAIL_USE_SSL = True                 # instead of USE_TLS if you prefer SSL
 
 # Where to send contact‐form submissions
 ADMIN_EMAIL = 'jsfakian@iesl.forth.gr'
 
 EMAIL_HOST_USER = 'jsfakian@iesl.forth.gr'      # your SMTP login
-EMAIL_HOST_PASSWORD = 'T0PoU!@k1'  # your SMTP password or app-specific token
+EMAIL_HOST_PASSWORD = '8BGrJQx8pIA7'  # your SMTP password or app-specific token
 
 DEFAULT_FROM_EMAIL = 'riana@iesl.forth.gr'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL      # sender address for error emails

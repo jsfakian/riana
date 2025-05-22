@@ -1,4 +1,4 @@
-import os, shutil, tarfile, threading, io
+import os, shutil, tarfile, threading, subprocess
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -16,7 +16,7 @@ from .forms import EmailOrUsernameAuthenticationForm, RegisterForm, CalcForm, Co
 from .tokens import activation_token
 from . import settings
 from django.contrib.auth.views import LoginView
-import matlab.engine
+#import matlab.engine
 
 # Register
 def register(request):
@@ -115,12 +115,13 @@ def manual_url(request):
 # MATLAB Calc (protected)
 @login_required
 def calc(request):
-    result = None
+    form = CalcForm()
+    started = False
 
     if request.method == 'POST':
         form = CalcForm(request.POST)
         if form.is_valid():
-            # pull out all your form data
+            # extract cleaned data
             material           = form.cleaned_data['Material']
             material_substrate = form.cleaned_data['Substrate']
             L1                 = form.cleaned_data['thickness']
@@ -138,72 +139,108 @@ def calc(request):
             user_email = request.user.email
             username   = request.user.username
             
-            buf = io.StringIO()
+            ## start MATLAB and cd into your code directory
+            #eng = matlab.engine.start_matlab()
+            #tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+            #eng.cd(tf_dir, nargout=0)
 
-            # 1) start MATLAB and cd into your code directory
-            eng = matlab.engine.start_matlab()
+            # run the calc script (no return value)
+            #eng.calc(
+            #    Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
+            #    material, material_substrate, n1, k1, n2, k2,
+            #    nargout=0,
+            #)
+            #eng.quit()
+
+            # Where is your MATLAB function?
             tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
-            eng.cd(tf_dir, nargout=0)
 
-            # 2) run the calc script (no return value)
-            eng.calc(
-                Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
-                material, material_substrate, n1, k1, n2, k2,
-                nargout=0,
-                stdout=buf,
-                stderr=buf
-            )
-            print("=== MATLAB OUTPUT ===")
-            print(buf.getvalue())
-            eng.quit()
+            # Path to your matlab binary
+            matlab_bin = '/usr/local/MATLAB/R2016b/bin/matlab'
 
-            # 3) move the output folder into a user‐specific location
-            src_folder = os.path.join(settings.BASE_DIR, material)
-            user_dir   = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
-            os.makedirs(user_dir, exist_ok=True)
+            # Build up the list of arguments for your calc call
+            #    Note: numeric values are cast to str; string arguments are wrapped in single quotes
+            args = [
+                str(Ep1),
+                str(wavelength1),
+                str(tp1),
+                str(t_delay1),
+                str(t_max1),
+                str(L1),
+                f"'{material}'",
+                f"'{material_substrate}'",
+                str(n1),
+                str(k1),
+                str(n2),
+                str(k2),
+            ]
 
-            # generate a unique run name
-            ts     = datetime.now().strftime('%Y%m%d_%H%M%S')
-            params = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
-            run_name = f"{ts}_{material}_{params}"
-            dest_folder = os.path.join(user_dir, run_name)
+            # Join them into the MATLAB command; then append 'exit' so MATLAB quits
+            #    e.g. "calc(1.0,532,10,...,'Si','SiO2',1.45,0.01); exit;"
+            matlab_call = "calc(" + ",".join(args) + "); exit;"
 
-            shutil.move(src_folder, dest_folder)
+            # capture a base URL for later use
+            base_url = request.build_absolute_uri('/')[:-1]  # strip trailing slash
 
-            # 4) tarball it
-            tar_name = run_name + '.tar.gz'
-            tar_path = os.path.join(user_dir, tar_name)
-            with tarfile.open(tar_path, 'w:gz') as tz:
-                tz.add(dest_folder, arcname=run_name)
+            def background_job():
+                # Run MATLAB
+                # Shell out
+                subprocess.run([
+                    matlab_bin,
+                    "-nodisplay",
+                    "-nosplash",
+                    "-nodesktop",
+                    "-r", matlab_call
+                ], cwd=tf_dir, check=True)
 
-            # 5) build download link and email the user
-            download_url = request.build_absolute_uri(
-                settings.MEDIA_URL + f"simulations/{user_id}/{tar_name}"
-            )
-            subject = 'Your Riana Simulation Results'
-            body = (
-                f"Hello {username},\n\n"
-                "Your simulation has completed with these parameters:\n"
-                f"  • Material: {material}\n"
-                f"  • Substrate: {material_substrate}\n"
-                f"  • Thickness: {L1} nm\n"
-                f"  • Fluence: {Ep1} J/cm²\n"
-                f"  • Wavelength: {wavelength1} nm\n"
-                f"  • Pulse Duration: {tp1} fs\n"
-                f"  • Pulse Separation: {t_delay1} fs\n"
-                f"  • Max Time: {t_max1} ps\n\n"
-                f"Download your full results here:\n{download_url}\n\n"
-                "Thank you for using Riana."
-            )
-            EmailMessage(subject, body, to=[user_email]).send()
-    else:
-        form = CalcForm()
+                # Move results
+                src = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s', material)
+                user_dir = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
+                os.makedirs(user_dir, exist_ok=True)
+                ts       = datetime.now().strftime('%Y%m%d_%H%M%S')
+                params   = f"t{L1}_f{Ep1}_wl{wavelength1}_pd{tp1}_ps{t_delay1}_mt{t_max1}"
+                run_name = f"{ts}_{material}_{params}"
+                dest     = os.path.join(user_dir, run_name)
+                shutil.move(src, dest)
+
+                # Tarball
+                tar_name = run_name + '.tar.gz'
+                tar_path = os.path.join(user_dir, tar_name)
+                with tarfile.open(tar_path, 'w:gz') as tz:
+                    tz.add(dest, arcname=run_name)
+
+                # Email
+                download_url = f"{base_url}{settings.MEDIA_URL}simulations/{user_id}/{tar_name}"
+                subject = 'Your Riana Simulation Results'
+                body    = (
+                    f"Hello {username},\n\n"
+                    "Your simulation has completed with these parameters:\n"
+                    f"  • Material: {material}\n"
+                    f"  • Substrate: {material_substrate}\n"
+                    f"  • Thickness: {L1} nm\n"
+                    f"  • Fluence: {Ep1} J/cm²\n"
+                    f"  • Wavelength: {wavelength1} nm\n"
+                    f"  • Pulse Duration: {tp1} fs\n"
+                    f"  • Pulse Separation: {t_delay1} fs\n"
+                    f"  • Max Time: {t_max1} ps\n\n"
+                    f"Download your full results here:\n{download_url}\n\n"
+                    "Thank you for using Riana."
+                )
+                EmailMessage(subject, body, to=[user_email]).send()
+
+            # launch the background thread
+            thread = threading.Thread(target=background_job, daemon=True)
+            thread.start()
+
+            # mark that we kicked off work and clear the form
+            started = True
+            form = CalcForm()
 
     return render(request, 'calc.html', {
         'form': form,
-        'result': result,
+        'started': started,
     })
-
+    
 def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
