@@ -111,7 +111,7 @@ class CalcForm(forms.Form):
     )
     max_time = forms.FloatField(
         label='Maximum Time (ps)',
-        help_text='Must be ≥ 2*pulse_dur and ≤ 30*(12*pulse_dur+pulse_sep)/1000'
+        help_text='Must be ≥ 2*pulse_dur/1000 and ≤ 30*(12*pulse_dur+pulse_sep)/1000'
     )
     # Additional optical constants, default to 1
     n1 = forms.FloatField(label='n1', initial=1)
