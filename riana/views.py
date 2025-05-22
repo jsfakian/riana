@@ -1,4 +1,4 @@
-import os, shutil, tarfile, threading, io
+import os, shutil, tarfile, threading, subprocess
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -16,7 +16,7 @@ from .forms import EmailOrUsernameAuthenticationForm, RegisterForm, CalcForm, Co
 from .tokens import activation_token
 from . import settings
 from django.contrib.auth.views import LoginView
-import matlab.engine
+#import matlab.engine
 
 # Register
 def register(request):
@@ -138,27 +138,57 @@ def calc(request):
             user_email = request.user.email
             username   = request.user.username
             
-            buf = io.StringIO()
+            ## start MATLAB and cd into your code directory
+            #eng = matlab.engine.start_matlab()
+            #tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+            #eng.cd(tf_dir, nargout=0)
 
-            # 1) start MATLAB and cd into your code directory
-            eng = matlab.engine.start_matlab()
+            # run the calc script (no return value)
+            #eng.calc(
+            #    Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
+            #    material, material_substrate, n1, k1, n2, k2,
+            #    nargout=0,
+            #)
+            #eng.quit()
+
+            # Where is your MATLAB function?
             tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
-            eng.cd(tf_dir, nargout=0)
 
-            # 2) run the calc script (no return value)
-            eng.calc(
-                Ep1, wavelength1, tp1, t_delay1, t_max1, L1,
-                material, material_substrate, n1, k1, n2, k2,
-                nargout=0,
-                stdout=buf,
-                stderr=buf
-            )
-            print("=== MATLAB OUTPUT ===")
-            print(buf.getvalue())
-            eng.quit()
+            # Path to your matlab binary
+            matlab_bin = '/usr/local/MATLAB/R2016b/bin/matlab'
 
-            # 3) move the output folder into a user‐specific location
-            src_folder = os.path.join(settings.BASE_DIR, material)
+            # Build up the list of arguments for your calc call
+            #    Note: numeric values are cast to str; string arguments are wrapped in single quotes
+            args = [
+                str(Ep1),
+                str(wavelength1),
+                str(tp1),
+                str(t_delay1),
+                str(t_max1),
+                str(L1),
+                f"'{material}'",
+                f"'{material_substrate}'",
+                str(n1),
+                str(k1),
+                str(n2),
+                str(k2),
+            ]
+
+            # Join them into the MATLAB command; then append 'exit' so MATLAB quits
+            #    e.g. "calc(1.0,532,10,...,'Si','SiO2',1.45,0.01); exit;"
+            matlab_call = "calc(" + ",".join(args) + "); exit;"
+
+            # Shell out
+            subprocess.run([
+                matlab_bin,
+                "-nodisplay",
+                "-nosplash",
+                "-nodesktop",
+                "-r", matlab_call
+            ], cwd=tf_dir, check=True)
+
+            # move the output folder into a user‐specific location
+            src_folder = os.path.join(tf_dir, material)
             user_dir   = os.path.join(settings.MEDIA_ROOT, 'simulations', str(user_id))
             os.makedirs(user_dir, exist_ok=True)
 
@@ -170,13 +200,13 @@ def calc(request):
 
             shutil.move(src_folder, dest_folder)
 
-            # 4) tarball it
+            # tarball it
             tar_name = run_name + '.tar.gz'
             tar_path = os.path.join(user_dir, tar_name)
             with tarfile.open(tar_path, 'w:gz') as tz:
                 tz.add(dest_folder, arcname=run_name)
 
-            # 5) build download link and email the user
+            # build download link and email the user
             download_url = request.build_absolute_uri(
                 settings.MEDIA_URL + f"simulations/{user_id}/{tar_name}"
             )
