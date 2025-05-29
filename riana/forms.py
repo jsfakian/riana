@@ -91,8 +91,14 @@ class CalcForm(forms.Form):
     )
     fluence = forms.FloatField(
         label='Fluence (J/cm²)',
-        min_value=0.01, max_value=0.9,
-        help_text='Enter a value between 0.01 and 0.9'
+        min_value=0.001, max_value=2,
+        help_text='Enter a value between 0.001 and 2',
+        widget=forms.NumberInput(attrs={
+            'class': 'mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2',
+            'min': '0.001',
+            'max': '2',
+            'step': '0.001',
+        })
     )
     wavelength = forms.FloatField(
         label='Wavelength (nm)',
@@ -123,13 +129,21 @@ class CalcForm(forms.Form):
         mt = self.cleaned_data.get('max_time')
         pd = self.cleaned_data.get('pulse_dur')
         ps = self.cleaned_data.get('pulse_sep')
+        # if any missing, skip
         if pd is None or ps is None or mt is None:
             return mt
-        min_allowed = 2 * pd
-        max_allowed = 2 * pd + 10 * ps
-        if mt < min_allowed or mt > max_allowed:
+
+        # convert fs → ps
+        pd_ps = pd / 1_000
+        ps_ps = ps / 1_000
+
+        # your intended business rules
+        min_allowed = 2 * pd_ps
+        max_allowed = 30 * (12 * pd_ps + ps_ps)
+
+        if not (min_allowed <= mt <= max_allowed):
             raise forms.ValidationError(
-                f"Maximum Time must be between {min_allowed:g} and {max_allowed:g} ps"
+                f"Maximum Time must be between "
+                f"{min_allowed:.3f} ps and {max_allowed:.3f} ps"
             )
         return mt
-    

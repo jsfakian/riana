@@ -66,10 +66,24 @@
         {{ form.pulse_sep|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"min=0 max=500000 step=0.1"}}
         {% if form.pulse_sep.help_text %}<p class="text-xs text-gray-500">{{ form.pulse_sep.help_text }}</p>{% endif %}
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Max Time (ps)</label>
-        {{ form.max_time|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"step=0.1" }}
-        {% if form.max_time.help_text %}<p class="text-xs text-gray-500">{{ form.max_time.help_text }}</p>{% endif %}
+      <div class="relative" id="max_time_container">
+        <label for="id_max_time" class="block text-sm font-medium text-gray-700">
+          Max Time (ps)
+        </label>
+
+        {{ form.max_time|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"step:0.001" }}
+
+        <!-- recommended-label -->
+        <span
+          id="id_max_time_reco"
+          class="absolute right-0 top-0 mt-1 mr-2 text-sm text-gray-500 hidden"
+        >
+          Recommended: <strong id="reco_value"></strong> ps
+        </span>
+
+        {% if form.max_time.help_text %}
+          <p class="text-xs text-gray-500">{{ form.max_time.help_text }}</p>
+        {% endif %}
       </div>
     </div>
 
@@ -80,6 +94,9 @@
 </div>
 
 <script>
+  let lastReco = null;
+  let userEdited = false;
+  
   function toggleFields() {
     const material = document.getElementById('id_Material').value;
     const substrate = document.getElementById('id_Substrate').value;
@@ -113,6 +130,37 @@
     mt.setAttribute('min', minAllowed);
     mt.setAttribute('max', maxAllowed);
   }
+
+  function computeRecommended() {
+    const pdInput = document.getElementById('id_pulse_dur');
+    const psInput = document.getElementById('id_pulse_sep');
+    const pd = parseFloat(pdInput.value) || 0;
+    const ps = parseFloat(psInput.value) || 0;
+    // formula: (2*6*pd + ps + 80000) / 1000
+    return (2 * 6 * pd + ps) / 1000 + 80;
+  }
+
+  function updateRecommendation() {
+    const recoValueEl = document.getElementById('reco_value');
+    const recoLabel = document.getElementById('id_max_time_reco');
+    const mtInput = document.getElementById('id_max_time');
+
+    lastReco = computeRecommended();
+    const rec = lastReco.toFixed(3);
+    recoValueEl.textContent = rec;
+
+    // if user hasn't manually touched mtInput, auto-fill it
+    if (!userEdited) {
+      mtInput.value = rec;
+    }
+    // show label only if the current value equals the recomputed one
+    if (parseFloat(mtInput.value) === lastReco) {
+      recoLabel.classList.remove('hidden');
+    } else {
+      recoLabel.classList.add('hidden');
+    }
+  }
+
   ['id_Material','id_Substrate'].forEach(id =>
     document.getElementById(id).addEventListener('change', toggleFields)
   );
@@ -120,6 +168,22 @@
   ['id_pulse_dur','id_pulse_sep'].forEach(id =>
     document.getElementById(id).addEventListener('input', updateMaxTimeRange)
   );
+   // Whenever pd or ps changes, recompute
+  document.getElementById('id_pulse_dur').addEventListener('input', updateRecommendation);
+  document.getElementById('id_pulse_sep').addEventListener('input', updateRecommendation);
+
+  // If user focuses and types in max_time, we consider it “manually edited”
+  document.getElementById('id_max_time').addEventListener('input', () => {
+    const val = parseFloat(mtInput.value);
+    if (val === lastReco) {
+      // if they re-enter the exact recommended, clear the “edited” flag
+      userEdited = false;
+    } else {
+      userEdited = true;
+    }
+    // always refresh the label visibility
+    updateRecommendation();
+  });
   
 </script>
 {% endblock %}
