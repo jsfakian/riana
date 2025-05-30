@@ -167,9 +167,9 @@
     document.getElementById(id).addEventListener('change', toggleFields)
   );
   document.getElementById('id_wavelength').addEventListener('input', toggleFields);
-  ['id_pulse_dur','id_pulse_sep'].forEach(id =>
-    document.getElementById(id).addEventListener('input', updateMaxTimeRange)
-  );
+  //['id_pulse_dur','id_pulse_sep'].forEach(id =>
+  //  document.getElementById(id).addEventListener('input', updateMaxTimeRange)
+  //);
    // Whenever pd or ps changes, recompute
   document.getElementById('id_pulse_dur').addEventListener('input', updateRecommendation);
   document.getElementById('id_pulse_sep').addEventListener('input', updateRecommendation);
