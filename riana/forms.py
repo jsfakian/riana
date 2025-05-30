@@ -115,9 +115,9 @@ class CalcForm(forms.Form):
         help_text='Enter a value between 0 and 500000'
     )
     max_time = forms.FloatField(
-        label='Maximum Time (ps)',
+        label='End of the time interval (starts at 0) (in ps)',
         min_value=0,
-        help_text='Max allowed end interval four times the Recommended Value',
+        help_text='Max allowed end interval four times the recommended value',
     )
     # Additional optical constants, default to 1
     n1 = forms.FloatField(label='n1', initial=1)
