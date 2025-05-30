@@ -91,8 +91,13 @@ class CalcForm(forms.Form):
     )
     fluence = forms.FloatField(
         label='Fluence (J/cm²)',
-        #min_value=0.01, max_value=0.9,
-        help_text='Recommended range of values 0.01 and 0.9'
+        min_value=0.001, max_value=2,
+        help_text='Recommended value range between 0.001 and 2',
+        widget=forms.NumberInput(attrs={
+            'class': 'mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2',
+            'min': '0.001',
+            'step': '0.001',
+        })
     )
     wavelength = forms.FloatField(
         label='Wavelength (nm)',
@@ -111,6 +116,7 @@ class CalcForm(forms.Form):
     )
     max_time = forms.FloatField(
         label='Maximum Time (ps)',
+        min_value=0,
         help_text='Max allowed end interval four times the Recommended Value',
     )
     # Additional optical constants, default to 1
@@ -118,3 +124,4 @@ class CalcForm(forms.Form):
     k1 = forms.FloatField(label='k1', initial=1)
     n2 = forms.FloatField(label='n2', initial=1)
     k2 = forms.FloatField(label='k2', initial=1)
+

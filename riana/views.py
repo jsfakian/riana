@@ -120,6 +120,7 @@ def calc(request):
 
     if request.method == 'POST':
         form = CalcForm(request.POST)
+        print(form.is_valid())
         if form.is_valid():
             # extract cleaned data
             material           = form.cleaned_data['Material']
@@ -138,7 +139,7 @@ def calc(request):
             user_id    = request.user.id
             user_email = request.user.email
             username   = request.user.username
-            
+
             ## start MATLAB and cd into your code directory
             #eng = matlab.engine.start_matlab()
             #tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
@@ -236,6 +237,9 @@ def calc(request):
             started = True
             form = CalcForm()
 
+        else:
+            print("POST data:", request.POST)
+            print("Form errors:", form.errors)    # <— inspect this!
     return render(request, 'calc.html', {
         'form': form,
         'started': started,
