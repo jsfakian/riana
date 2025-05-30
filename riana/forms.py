@@ -92,11 +92,10 @@ class CalcForm(forms.Form):
     fluence = forms.FloatField(
         label='Fluence (J/cm²)',
         min_value=0.001, max_value=2,
-        help_text='Enter a value between 0.001 and 2',
+        help_text='Recommended value range between 0.001 and 2',
         widget=forms.NumberInput(attrs={
             'class': 'mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2',
             'min': '0.001',
-            'max': '2',
             'step': '0.001',
         })
     )
@@ -117,33 +116,12 @@ class CalcForm(forms.Form):
     )
     max_time = forms.FloatField(
         label='Maximum Time (ps)',
-        help_text='Must be ≥ 2*pulse_dur/1000 and ≤ 30*(12*pulse_dur+pulse_sep)/1000'
+        min_value=0,
+        help_text='Max allowed end interval four times the Recommended Value',
     )
     # Additional optical constants, default to 1
     n1 = forms.FloatField(label='n1', initial=1)
     k1 = forms.FloatField(label='k1', initial=1)
     n2 = forms.FloatField(label='n2', initial=1)
     k2 = forms.FloatField(label='k2', initial=1)
-    
-    def clean_max_time(self):
-        mt = self.cleaned_data.get('max_time')
-        pd = self.cleaned_data.get('pulse_dur')
-        ps = self.cleaned_data.get('pulse_sep')
-        # if any missing, skip
-        if pd is None or ps is None or mt is None:
-            return mt
 
-        # convert fs → ps
-        pd_ps = pd / 1_000
-        ps_ps = ps / 1_000
-
-        # your intended business rules
-        min_allowed = 2 * pd_ps
-        max_allowed = 30 * (12 * pd_ps + ps_ps)
-
-        if not (min_allowed <= mt <= max_allowed):
-            raise forms.ValidationError(
-                f"Maximum Time must be between "
-                f"{min_allowed:.3f} ps and {max_allowed:.3f} ps"
-            )
-        return mt

@@ -48,7 +48,7 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700">Fluence (J/cm²)</label>
-        {{ form.fluence|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"min=0.01 max=0.9 step=0.01" }}
+        {{ form.fluence|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"min=0.001 step=0.01" }}
         {% if form.fluence.help_text %}<p class="text-xs text-gray-500">{{ form.fluence.help_text }}</p>{% endif %}
       </div>
       <div>
@@ -137,7 +137,9 @@
     const pd = parseFloat(pdInput.value) || 0;
     const ps = parseFloat(psInput.value) || 0;
     // formula: (2*6*pd + ps + 80000) / 1000
-    return (2 * 6 * pd + ps) / 1000 + 80;
+    if (ps == 0)
+      return (6 * pd) / 1000 + 40; // (6*tp+40000)/1000
+    return (12 * pd) / 1000 + 80 + ps;  // (12*tp+80000+tdelay*1000)/1000
   }
 
   function updateRecommendation() {
@@ -172,11 +174,11 @@
   document.getElementById('id_pulse_dur').addEventListener('input', updateRecommendation);
   document.getElementById('id_pulse_sep').addEventListener('input', updateRecommendation);
 
-  // If user focuses and types in max_time, we consider it “manually edited”
+  // If user focuses and types in max_time, we consider it manually edited
   document.getElementById('id_max_time').addEventListener('input', () => {
     const val = parseFloat(mtInput.value);
     if (val === lastReco) {
-      // if they re-enter the exact recommended, clear the “edited” flag
+      // if they re-enter the exact recommended, clear the edited flag
       userEdited = false;
     } else {
       userEdited = true;
