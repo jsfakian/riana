@@ -67,7 +67,7 @@
         {% if form.pulse_sep.help_text %}<p class="text-xs text-gray-500">{{ form.pulse_sep.help_text }}</p>{% endif %}
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700">Max Time (ps)</label>
+        <label class="block text-sm font-medium text-gray-700">End of the time interval (ps)</label>
         {{ form.max_time|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"step=0.1" }}
         {% if form.max_time.help_text %}<p class="text-xs text-gray-500">{{ form.max_time.help_text }}</p>{% endif %}
       </div>

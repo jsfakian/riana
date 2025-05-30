@@ -91,8 +91,8 @@ class CalcForm(forms.Form):
     )
     fluence = forms.FloatField(
         label='Fluence (J/cm²)',
-        min_value=0.01, max_value=0.9,
-        help_text='Enter a value between 0.01 and 0.9'
+        #min_value=0.01, max_value=0.9,
+        help_text='Recommended range of values 0.01 and 0.9'
     )
     wavelength = forms.FloatField(
         label='Wavelength (nm)',
@@ -111,25 +111,10 @@ class CalcForm(forms.Form):
     )
     max_time = forms.FloatField(
         label='Maximum Time (ps)',
-        help_text='Must be ≥ 2*pulse_dur/1000 and ≤ 30*(12*pulse_dur+pulse_sep)/1000'
+        help_text='Max allowed end interval four times the Recommended Value',
     )
     # Additional optical constants, default to 1
     n1 = forms.FloatField(label='n1', initial=1)
     k1 = forms.FloatField(label='k1', initial=1)
     n2 = forms.FloatField(label='n2', initial=1)
     k2 = forms.FloatField(label='k2', initial=1)
-    
-    def clean_max_time(self):
-        mt = self.cleaned_data.get('max_time')
-        pd = self.cleaned_data.get('pulse_dur')
-        ps = self.cleaned_data.get('pulse_sep')
-        if pd is None or ps is None or mt is None:
-            return mt
-        min_allowed = 2 * pd
-        max_allowed = 2 * pd + 10 * ps
-        if mt < min_allowed or mt > max_allowed:
-            raise forms.ValidationError(
-                f"Maximum Time must be between {min_allowed:g} and {max_allowed:g} ps"
-            )
-        return mt
-    
