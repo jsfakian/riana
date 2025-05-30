@@ -127,8 +127,8 @@ EMAIL_SSL_CERTFILE = None
 #print(EMAIL_PASSWORD)
 
 # Media files
-MEDIA_URL = os.environ.get('MEDIA_URL')
-MEDIA_ROOT = BASE_DIR / os.environ.get('MEDIA_ROOT')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Security headers
 X_FRAME_OPTIONS = 'SAMEORIGIN'

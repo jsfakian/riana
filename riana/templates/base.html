@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Riana App{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@^2/dist/tailwind.min.css">
+  {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
   <!-- Navigation -->
@@ -30,6 +31,7 @@
   <!-- Main Content -->
   <main class="flex-grow container mx-auto px-4 py-6">
     {% block content %}{% endblock %}
+    {% block extra_js %}{% endblock %}
   </main>
 
   <!-- Footer -->

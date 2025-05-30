@@ -1,54 +1,137 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 {% block title %}Login to RIANA{% endblock %}
+
+{% block extra_head %}
+  <!-- Swiper’s CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/swiper/swiper-bundle.min.css"
+  />
+{% endblock %}
+
 {% block content %}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-  <!-- Login Form Column -->
-  <div class="md:col-span-1 bg-white p-6 rounded shadow-md">
-    <h1 class="text-2xl font-bold mb-4">Login</h1>
-    <form method="post" class="space-y-4">
-      {% csrf_token %}
-      <div>
-        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
-          Username or Email
-        </label>
-        {{ form.username|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
-        {% for err in form.username.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ err }}</p>
-        {% endfor %}
-      </div>
-      <div>
-        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">
-          Password
-        </label>
-        {{ form.password|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
-        {% for err in form.password.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ err }}</p>
-        {% endfor %}
-      </div>
-      <button type="submit"
-              class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
-        Log In
-      </button>
-      <div class="text-center mt-2">
-        <a href="{% url 'forgot_password' %}" class="text-sm text-blue-500 hover:underline">
-          Forgot password?
-        </a>
-      </div>
-    </form>
+  
+  <!-- LEFT COLUMN: About + Login stacked -->
+  <div class="md:col-span-1 space-y-6">
+    
+    <!-- About Card -->
+    <div class="bg-white p-6 rounded shadow-md">
+      <h2 class="text-xl font-semibold mb-4">About RIANA</h2>
+      <p class="text-gray-700 leading-relaxed">
+        A user-friendly online interface for simulating and visualizing the ultrafast
+        opto-thermal response of thin metal films under femtosecond laser pulses.
+        Simply select your laser parameters (wavelength, pulse duration, fluence, pulse delay),
+        choose a metal (Au, Ag, Cu, etc.) and substrate (Si, SiO₂, glass or air), and instantly view
+        interactive plots of reflectivity, transmissivity, absorptivity and the time-resolved
+        electron &amp; lattice temperature profiles—with data and figures downloadable for further analysis.
+      </p>
+    </div>
+    
+    <!-- Login Card -->
+    <div class="bg-white p-6 rounded shadow-md">
+      <h1 class="text-2xl font-bold mb-4">Login</h1>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
+            Username or Email
+          </label>
+          {{ form.username|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+          {% for err in form.username.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ err }}</p>
+          {% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          {{ form.password|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+          {% for err in form.password.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ err }}</p>
+          {% endfor %}
+        </div>
+        <button type="submit"
+                class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
+          Log In
+        </button>
+        <div class="text-center mt-2">
+          <a href="{% url 'forgot_password' %}" class="text-sm text-blue-500 hover:underline">
+            Forgot password?
+          </a>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <!-- Carousel Column (2/3 width) -->
-  <div class="md:col-span-2 overflow-hidden rounded shadow-md">
-    <!-- ... your existing carousel markup ... -->
+  <!-- RIGHT: Swiper gallery -->
+  <div class="md:col-span-2 bg-white rounded shadow-md overflow-hidden">
+    <div class="swiper">                    {# give it a height #}
+      <div class="swiper-wrapper">
+	<div class="swiper-slide">
+          <img
+            src="media/Te_Tl_t.png"
+            alt="Te_Tl_t"
+            class="w-full h-auto object-cover"
+          />
+        </div>
+
+        <div class="swiper-slide">
+          <img
+            src="media/Te_t_z.png"
+            alt="Te_t_z"
+            class="w-full h-auto object-cover"
+          />
+        </div>
+
+        <div class="swiper-slide">
+          <img
+            src="media/Absorptivity.png"
+            alt="Absorptivity"
+            class="w-full h-auto object-cover"
+          />
+        </div>
+
+        <div class="swiper-slide">
+          <img
+            src="media/TL_t_z_upper_layer_contour.png"
+            alt="TL_t_z_upper_layer_contour"
+            class="w-full h-auto object-cover"
+          />
+        </div>
+      </div>
+      <!-- pagination dots -->
+      <div class="swiper-pagination"></div>
+      <!-- arrows -->
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-button-next"></div>
+    </div>
   </div>
+
 </div>
-<!--div>A user-friendly online interface for simulating and visualizing 
-the ultrafast opto-thermal response of thin metal films under femtosecond 
-laser pulses. Simply select your laser parameters (wavelength, pulse 
-duration, fluence, pulse delay), choose a metal (Au, Ag, Cu, etc.) and 
-substrate (Si, SiO₂, glass or air), and instantly view interactive plots 
-of reflectivity, transmissivity, absorptivity and the time-resolved 
-electron & lattice temperature profiles—with data and figures 
-downloadable for further analysis. </div-->
+{% endblock %}
+
+{% block extra_js %}
+  <!-- Swiper’s JS -->
+  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      new Swiper('.swiper', {
+        loop: true,
+        autoplay: {
+          delay: 5000,            // 2 seconds
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+        },
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+      });
+    });
+  </script>
 {% endblock %}
