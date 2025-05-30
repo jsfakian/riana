@@ -74,26 +74,11 @@ function calc( ...
     end
 
     %% RUN THE CODES
-    % Determine which backend to use
-    isBigDelay = (t_delay1 > 5000);
-    isTwoMetalRoutine = ...
-        any(strcmp(material, {'Ni','Steel','Ti','Pt'})) || ...
-        ( any(strcmp(material, {'Au','Cu','Cr','Ag','W','Al','Mo'})) && isBigDelay );
+    if   strcmp(material,'Au')==1 || strcmp(material,'Cu')==1 || strcmp(material,'Ag')==1 || strcmp(material,'Al')==1
+        Code_for_all_metals_but_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material_substrate, L1);
 
-    % Dispatch
-    if any(strcmp(material, {'Au','Cu','Cr','Ag','W','Al','Mo'})) && ~isBigDelay
-        % Use the single-metal backend
-        Code_for_all_metals_but_two( ...
-            Ep1, wavelength1, tp1, t_delay1, t_max1, ...
-            material, material_substrate, L1);
-    elseif isTwoMetalRoutine
-        % Use the two-metal / delayed backend
-        Code_for_two( ...
-            Ep1, wavelength1, tp1, t_delay1, t_max1, ...
-            material, material_substrate, L1);
-    %else
-    %    % No matching routine
-    %    warning('No simulation routine for material=%s, delay=%g fs', material, t_delay1);
-    %    result = [];
+    elseif  strcmp(material,'Cr')==1 || strcmp(material,'W')==1 ...
+      || strcmp(material,'Mo')==1 || strcmp(material,'Ni')==1 || strcmp(material,'Steel')==1 || strcmp(material,'Ti')==1 || strcmp(material,'Pt')==1
+        Code_for_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material_substrate, L1);
     end
 end

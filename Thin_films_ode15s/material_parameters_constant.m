@@ -59,7 +59,7 @@ elseif strcmp(material,'Au')==1
  elseif strcmp(material,'Steel')==1
     
  rho_l=7000; % in Kgr/m^3 (in liquid phase) 
- rho_s=6900; % in Kgr/m^3 (in solid phase)
+ rho_s=7750; % in Kgr/m^3 (in solid phase)
  CL_s=475; % in J/(Kgr*K)
  CL_l=748; % in J/(Kgr*K) (molten phase) 
  Ae=0.98*1e7; %s-1K=2; 
@@ -100,17 +100,18 @@ elseif strcmp(material,'Au')==1
  
  
   elseif strcmp(material,'Mo')==1
-    
- rho_l=10223; % in Kgr/m^3 (in liquid phase) 
- rho_s=9330; % in Kgr/m^3 (in solid phase)
+
+ rho_s=10223; % in Kgr/m^3 (in liquid phase) 
+ rho_l=9330; % in Kgr/m^3 (in solid phase)
  CL_s=0.25*1000; % in J/(Kgr*K)
  CL_l=0.25*1000; % in J/(Kgr*K) %%%%%%%%%%%%SPECIFY%%%%%%%%%%%
- Ae=1*1e7; %s-1K=2;    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%approximately?
+ Ae=1e7; %s-1K=2;    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%approximately?
  BL=1.5e11 ; %s-1K-1;    %%%%%%%%%%%%%%%%%%%%%%%%%%%% approximatekly?
  ke0=138; %Jm-1s-1K-1;
  T_cr=9450; %K
  Tmelt=2896  ;% K
- 
+  
+        
  
  
  elseif strcmp(material,'W')==1

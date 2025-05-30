@@ -16,8 +16,9 @@ global  Ae BL n_2 k_2 n_1 k_1 stri Tmelt  alpha1 break_code T_cr
 % material='Ti'; 
 % material_substrate='SiO2'; 
 L1=L1; % nm
+ L1d=L1; %nm
  L1=L1*1e-9 ;%m  
-L2=30e-9; %m
+L2=100e-9; %m
 L=L1+L2; %m
 
 %% initialize parameters 
@@ -48,7 +49,14 @@ t_max = t_max1*1e-12;  % Simulation time (s)
 
 %% Spatial and temporal discretization
 
+
+% discretization size
+if L1d<=20
  dx1=0.5e-9;
+else 
+dx1=1e-9;
+end
+
  l1=0:dx1:L1;
  N1=round(length(l1));
 
@@ -69,6 +77,7 @@ DEPTH=[0:dx1:(N1-1)*dx1,(N1-1)*dx1+dx2:dx2:L2+L1];
 first_material=0:dx1:(N1-1)*dx1;
 
 second_material=(N1-1)*dx1+dx2:dx2:L1+L2;
+
 
 
 if t_max1<=1000
@@ -194,7 +203,7 @@ while t<=t_max
     
   Te1=300*ones(N1+1,1);  % Electron Temperature profile
 TL1=300*ones(N1+1,1);  % Lattice Temperature profile
-TL2=300*ones(N2+1,1);  % Lattice Temperature profile
+TL2=300*ones(N2+2,1);  % Lattice Temperature profile
         
     else
       %%%% first layer
@@ -287,7 +296,7 @@ absorpt=1-reflectivity-1*transmissivity;
       
 
 
-if strcmp(material,'Ni')==1 |  strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1 | strcmp(material,'Cr')==1 | strcmp(material,'Pt')==1 | strcmp(material,'W')==1
+if  strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1 | strcmp(material,'Pt')==1 | strcmp(material,'W')==1
  
     ballistic=1/alpha1(1);
   
@@ -312,6 +321,14 @@ else
     elseif strcmp(material,'Mo')==1
         
            ballistic=20e-3*1e-6; %m 
+           
+         elseif strcmp(material,'Cr')==1 
+             
+              ballistic=14e-3*1e-6; %m 
+              
+                   elseif strcmp(material,'Ni')==1 
+             
+              ballistic=11e-3*1e-6; %m 
     end 
     
 end 
@@ -362,7 +379,7 @@ end
        
         % 3 Electron-phono coupling and heat capacity of electron -first
         % material
-        coupl_const1=ones(N1+1,1);
+        coupl_const=ones(N1+1,1);
          CE=ones(N1+1,1);
          
          if ~(strcmp(material,'Cr')==1)
@@ -426,9 +443,10 @@ A=0;
 j1=1;
 
  
+ 
 dTe1_dt(i,j1)=((ke1(i+1,j1)+ke1(i,j1))./(2*dx1).*(Te1(i+1,j1)-Te1(i,j1))/(dx1)-...
     (ke1(i,j1)+ke1(i-1,j1))./(2*dx1).*(Te1(i,j1)-Te1(i-1,j1))/(dx1)-...
-    coupl_const(i,j1).*(Te1(i,j1)-TL1(i,j1))+Source1(2:end))./CE(i,j1);
+    coupl_const(i,j1).*(Te1(i,j1)-TL1(i,j1))+Source1(1:end-1))./CE(i,j1);
 
     
 %end 
@@ -461,8 +479,7 @@ TL1(i)=TL1(i)+dt*dTL1_dt(i);
 i=2:size(dTL2_dt,1)-1 ;
 
 
-
-dTL2_dt(i)=(kL2*(TL2(i+1)+1*TL2(i-1)-2*TL2(i))/dx2^2+1*Source2(2:end)')/CL_s2;
+dTL2_dt(i)=(kL2*(TL2(i+1)+1*TL2(i-1)-2*TL2(i))/dx2^2+1*Source2(1:end)')/CL_s2;
 
 TL2(i)=TL2(i)+dt*dTL2_dt(i);
 
@@ -519,7 +536,7 @@ end
   
 
 
-   A=[TL_sol_1(:,1:end)';TL_sol_2(:,2:end)'];
+   A=[TL_sol_1(:,1:end)';TL_sol_2(:,2:end-1)'];
    
  
  [r,c]=find(TL_sol_1>=Tmelt );

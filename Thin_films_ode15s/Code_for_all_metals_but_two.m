@@ -2,8 +2,7 @@ function Code_for_all_metals_but_two(Ep1,wavelength1, tp1, t_delay1, t_max1, mat
 
 %%
 
-global wavelength1 Ae BL n_2 k_2 stri Tmelt n_1 k_1 alpha1 break_code T_cr
-
+global wavelength1 Ae BL n_2 k_2 stri Tmelt n_1 k_1 alpha1 break_code T_cr more_accurate
 
 %% Define Energy pulse, laser wavelength, pulse duration, thickness of the
 %%% material
@@ -16,6 +15,7 @@ global wavelength1 Ae BL n_2 k_2 stri Tmelt n_1 k_1 alpha1 break_code T_cr
 % material='Ti'; 
 % material_substrate='SiO2'; 
 L1=L1; % nm
+L1d=L1;
  L1=L1*1e-9 ;%m  
 L2=100e-9; %m
 L=L1+L2; %m
@@ -36,9 +36,15 @@ break_code=0; % label to ensure that if Te>50000 it does not continue to run
 
 %% Spatial and temporal discretization
 
-
-
+% discretization size
+if L1d<=20
  dx1=0.5e-9;
+else 
+dx1=L1d/40*1e-9;
+end
+
+
+
  l1=0:dx1:L1;
  N1=round(length(l1));
 
@@ -88,7 +94,14 @@ T0=[Te;TL];          % Temperatures
 
 
 % Use an anonymous wrapper to pass extra args
-options = odeset('Events', @stop_condition);
+% options = odeset('Events', @stop_condition);
+% 'RelTol',1e-6,'AbsTol',1e-8,
+
+if more_accurate==1
+   options = odeset('RelTol',1e-6,'AbsTol',1e-8,'Events', @stop_condition);
+else 
+    options = odeset('Events', @stop_condition);
+end 
 
   if t_max/tp<3000
     
@@ -385,7 +398,7 @@ t_01=(2*REF_0)/(REF_1+REF_0);
 
 absorpt=1-reflectivity-1*transmissivity;
 
-if strcmp(material,'Ni')==1 |  strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1 | strcmp(material,'Cr')==1  | strcmp(material,'Pt')==1 
+if strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1  | strcmp(material,'Pt')==1 
  
     ballistic=1/alpha1(1);
   
@@ -413,6 +426,15 @@ else
                   elseif strcmp(material,'Mo')==1
         
            ballistic=20e-3*1e-6; %m 
+           
+           
+                    elseif strcmp(material,'Cr')==1 
+             
+              ballistic=14e-3*1e-6; %m 
+              
+                   elseif strcmp(material,'Ni')==1 
+             
+              ballistic=11e-3*1e-6; %m 
     end 
     
 end 
@@ -483,7 +505,7 @@ end
        
         % 3 Electron-phono coupling and heat capacity of electron -first
         % material
-        coupl_const1=ones(N1,1);
+        coupl_const=ones(N1,1);
          CE=ones(N1,1);
          
          if ~(strcmp(material,'Cr')==1)
