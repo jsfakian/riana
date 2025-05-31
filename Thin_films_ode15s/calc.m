@@ -22,6 +22,7 @@ function calc( ...
     % Suppress warnings and plots by default
     warning('off');
     global stri
+    more_accurate=1;
     stri = 'off';
 
     % Assign globals for downstream code

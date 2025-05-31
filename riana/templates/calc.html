@@ -26,19 +26,19 @@
       </div>
       <!-- conditional fields -->
       <div id="optics1" class="hidden">
-        <label class="block text-sm font-medium text-gray-700">n1</label>
+        <label class="block text-sm font-medium text-gray-700">Refractive index of metal</label>
         {{ form.n1|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
       </div>
       <div id="optics1_k" class="hidden">
-        <label class="block text-sm font-medium text-gray-700">k1</label>
+        <label class="block text-sm font-medium text-gray-700">Extinction coefficient of metal</label>
         {{ form.k1|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
       </div>
       <div id="optics2" class="hidden">
-        <label class="block text-sm font-medium text-gray-700">n2</label>
+        <label class="block text-sm font-medium text-gray-700">Refractive index of substrate</label>
         {{ form.n2|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
       </div>
       <div id="optics2_k" class="hidden">
-        <label class="block text-sm font-medium text-gray-700">k2</label>
+        <label class="block text-sm font-medium text-gray-700">Extinction coefficient of substrate</label>
         {{ form.k2|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
       </div>
       <div>
@@ -139,7 +139,7 @@
     // formula: (2*6*pd + ps + 80000) / 1000
     if (ps == 0)
       return (6 * pd) / 1000 + 40; // (6*tp+40000)/1000
-    return (12 * pd) / 1000 + 80 + ps;  // (12*tp+80000+tdelay*1000)/1000
+    return (12 * pd + ps) / 1000 + 80;  // (12*tp+80000+tdelay*1000)/1000
   }
 
   function updateRecommendation() {
