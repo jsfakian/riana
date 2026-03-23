@@ -2,7 +2,7 @@ function Code_for_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material
 
 %%
 
-global  Ae BL n_2 k_2 n_1 k_1 stri Tmelt  alpha1 break_code T_cr
+global  Ae BL n_2 k_2 n_1 k_1 stri Tmelt  alpha1 break_code T_cr E1_r E2_i
 
 
 %% Define Energy pulse, laser wavelength, pulse duration, thickness of the
@@ -34,6 +34,8 @@ AA=0;
 REFL=[];
 ABSO=[];
 TRANS=[];
+REFRACT_real=[];
+REFRACT_imag=[];
  break_code=0; % label to ensure that if Te>50000 it does not continue to run 
 
 
@@ -203,7 +205,7 @@ while t<=t_max
     
   Te1=300*ones(N1+1,1);  % Electron Temperature profile
 TL1=300*ones(N1+1,1);  % Lattice Temperature profile
-TL2=300*ones(N2+2,1);  % Lattice Temperature profile
+TL2=300*ones(N2+1,1);  % Lattice Temperature profile
         
     else
       %%%% first layer
@@ -233,6 +235,8 @@ TL2=300*ones(N2+2,1);  % Lattice Temperature profile
 %%% optical parameters of first material
 if ~(strcmp(material,'Mo'))==1
 [n_1,k_1, alpha1]=material_optical_parameters(material,Te1,TL1, Ae, BL, N1, wavelength);
+
+
 else 
     n_1=n_1;
     k_1=k_1;
@@ -291,13 +295,11 @@ t_01=(2*REF_0)/(REF_1+REF_0);
 absorpt=1-reflectivity-1*transmissivity;
 
 
-
  
       
 
 
-if  strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1 | strcmp(material,'Pt')==1 | strcmp(material,'W')==1
- 
+if  strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1 | strcmp(material,'Pt')==1 
     ballistic=1/alpha1(1);
   
   
@@ -329,6 +331,10 @@ else
                    elseif strcmp(material,'Ni')==1 
              
               ballistic=11e-3*1e-6; %m 
+              
+                 elseif strcmp(material,'W')==1
+        
+           ballistic=0e-3*1e-6; %m 
     end 
     
 end 
@@ -390,7 +396,7 @@ end
                        CE(q1)=polyval(p1,Te1(q1)); % to convert from J/(m^3*K) to  J/(microns^3*K);
                   end
    
-                   if q2>0
+                   if length(q2)>0
                     coupl_const(q2)=polyval(p4,Te1(q2));% to convert from W/(m^3*K) to  W/(microns^3*K)
                     CE(q2)=polyval(p2,Te1(q2)); % to convert from J/(m^3*K) to  J/(microns^3*K);
                     end
@@ -479,7 +485,7 @@ TL1(i)=TL1(i)+dt*dTL1_dt(i);
 i=2:size(dTL2_dt,1)-1 ;
 
 
-dTL2_dt(i)=(kL2*(TL2(i+1)+1*TL2(i-1)-2*TL2(i))/dx2^2+1*Source2(1:end)')/CL_s2;
+dTL2_dt(i)=(kL2*(TL2(i+1)+1*TL2(i-1)-2*TL2(i))/dx2^2+1*Source2(2:end)')/CL_s2;
 
 TL2(i)=TL2(i)+dt*dTL2_dt(i);
 
@@ -515,7 +521,8 @@ TL=[TL,TL1(1)];
 REFL=[REFL,reflectivity];
 ABSO=[ABSO,absorpt];
 TRANS=[TRANS,transmissivity];
-
+REFRACT_real=[REFRACT_real,n_1];
+REFRACT_imag=[REFRACT_imag,k_1];
 
 
  Te1_matrix=[Te1_matrix;Te1'];
@@ -535,10 +542,9 @@ end
   TL_sol_2=TL2_matrix; %[L1 L2]
   
 
-
-   A=[TL_sol_1(:,1:end)';TL_sol_2(:,2:end-1)'];
+   A=[TL_sol_1(:,1:end)';TL_sol_2(:,2:end)'];
    
- 
+
  [r,c]=find(TL_sol_1>=Tmelt );
  if length(r)>0
  maximum_depth_pixel=max(c);
@@ -595,6 +601,10 @@ Icoeff = 1/2*exp(-4 * log(2) * (t-3*tp).^2 / tp^2)+...
                         DATA.Tmelt=Tmelt;
                         DATA.Tablation=0.95*T_cr;
                         DATA.ablated=depthofablatedpart;
+                        
+                        E1_r=REFRACT_real.^2-REFRACT_imag.^2;
+                            E2_i=2*REFRACT_real.*REFRACT_imag;
+                 
 
 % save('RESULTS.mat','DATA','-mat')
 

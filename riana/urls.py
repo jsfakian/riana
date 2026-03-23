@@ -43,4 +43,5 @@ urlpatterns = [
 
     # Protected MATLAB calc page
     path('calc/', views.calc, name='calc'),
+    path('pred/', views.predict, name='pred'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

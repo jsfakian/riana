@@ -7,16 +7,16 @@ from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMessage
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.decorators import login_required
-from .forms import EmailOrUsernameAuthenticationForm, RegisterForm, CalcForm, ContactForm
+from .forms import EmailOrUsernameAuthenticationForm, RegisterForm, CalcForm, ContactForm, PredictForm
 from .tokens import activation_token
 from . import settings
 from django.contrib.auth.views import LoginView
-#import matlab.engine
+from pathlib import Path
 
 # Register
 def register(request):
@@ -126,7 +126,7 @@ def calc(request):
             material           = form.cleaned_data['Material']
             material_substrate = form.cleaned_data['Substrate']
             L1                 = form.cleaned_data['thickness']
-            Ep1                = form.cleaned_data['fluence']
+            Ep1                = 1 #form.cleaned_data['fluence']
             wavelength1        = form.cleaned_data['wavelength']
             tp1                = form.cleaned_data['pulse_dur']
             t_delay1           = form.cleaned_data['pulse_sep']
@@ -179,6 +179,7 @@ def calc(request):
             # Join them into the MATLAB command; then append 'exit' so MATLAB quits
             #    e.g. "calc(1.0,532,10,...,'Si','SiO2',1.45,0.01); exit;"
             matlab_call = "calc(" + ",".join(args) + "); exit;"
+            print(matlab_call)
 
             # capture a base URL for later use
             base_url = request.build_absolute_uri('/')[:-1]  # strip trailing slash
@@ -219,7 +220,6 @@ def calc(request):
                     f"  • Material: {material}\n"
                     f"  • Substrate: {material_substrate}\n"
                     f"  • Thickness: {L1} nm\n"
-                    f"  • Fluence: {Ep1} J/cm²\n"
                     f"  • Wavelength: {wavelength1} nm\n"
                     f"  • Pulse Duration: {tp1} fs\n"
                     f"  • Pulse Separation: {t_delay1} fs\n"
@@ -244,7 +244,165 @@ def calc(request):
         'form': form,
         'started': started,
     })
+
+def predict(request):
+    import json
+    y_pred = None
+    error = None
+    started = False
     
+    if request.method == 'POST':
+        form = PredictForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            material    = form.cleaned_data['Material']
+            t_delay     = form.cleaned_data['pulse_sep']
+            thickness   = form.cleaned_data['thickness']
+
+            user_id    = request.user.id
+            user_email = request.user.email
+            username   = request.user.username
+
+            venv_python = Path("/home/nffa/iesl/data_driven_to_platform/.venv/bin/python")
+            script = "/home/nffa/iesl/data_driven_to_platform/data_driven_run.py"
+
+            cmd = [
+                str(venv_python),
+                script,
+                "--thickness", str(thickness),
+                "--t-delay", str(t_delay),
+                "--material", str(material),
+            ]
+
+            try:
+                result = subprocess.run(
+                    cmd,
+                    cwd="/home/nffa/iesl/data_driven_to_platform",  # IMPORTANT for Hydra/config relative paths
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                y_pred = json.loads(result.stdout.strip())
+                Ep1 = y_pred
+
+                # Now run the MATLAB Interface_predictive function in background
+                user_id    = request.user.id
+                user_email = request.user.email
+                username   = request.user.username
+                
+                def background_job():
+                    # Where is your MATLAB function?
+                    tf_dir = os.path.join(settings.BASE_DIR, 'Thin_films_ode15s')
+
+                    # Path to your matlab binary
+                    matlab_bin = '/usr/local/MATLAB/R2016b/bin/matlab'
+
+                    # Build up the list of arguments for your Interface_predictive call
+                    args = [
+                        str(t_delay),
+                        str(thickness),
+                        f"'{material}'",
+                        str(Ep1),
+                    ]
+
+                    # Join them into the MATLAB command
+                    matlab_call = "predictive_interface(" + ",".join(args) + "); exit;"
+                    print(matlab_call)
+
+                    try:
+                        # Run MATLAB and capture output
+                        result = subprocess.run([
+                            matlab_bin,
+                            "-nodisplay",
+                            "-nosplash",
+                            "-nodesktop",
+                            "-r", matlab_call
+                        ], cwd=tf_dir, capture_output=True, text=True, check=True)
+
+                        # Extract MATLAB output and filter out MATLAB header
+                        matlab_output = result.stdout
+                        # Remove MATLAB startup messages (everything before "Material:")
+                        lines = matlab_output.splitlines()
+                        output_lines = []
+                        capture = False
+                        for line in lines:
+                            if 'Material:' in line:
+                                capture = True
+                            if capture:
+                                output_lines.append(line)
+                        filtered_output = '\n'.join(output_lines)
+
+                        # Email
+                        subject = 'Your Riana Predictive Model Results'
+                        body    = (
+                            f"Hello {username},\n\n"
+                            "Your predictive model has been completed with the following parameters:\n"
+                            f"  • Material: {material}\n"
+                            f"  • Thickness: {thickness} nm\n"
+                            f"  • Pulse Delay: {t_delay} ps\n"
+                            f"  • Predicted Damage Threshold (J/cm²): {Ep1}\n\n"
+                            "Analysis Results:\n"
+                            f"{filtered_output}\n\n"
+                            "Thank you for using Riana."
+                        )
+                        EmailMessage(subject, body, to=[user_email]).send()
+
+                    except subprocess.CalledProcessError as e:
+                        # Send error email
+                        subject = 'Your Riana Predictive Model - Error'
+                        body    = (
+                            f"Hello {username},\n\n"
+                            "Unfortunately, there was an error processing your predictive model request:\n"
+                            f"{e.stderr}\n\n"
+                            "Please try again.\n\n"
+                            "Thank you for using Riana."
+                        )
+                        EmailMessage(subject, body, to=[user_email]).send()
+
+                # launch the background thread
+                thread = threading.Thread(target=background_job, daemon=True)
+                thread.start()
+
+                # mark that we kicked off work and clear the form
+                started = True
+                form = PredictForm()
+                
+                # For AJAX requests, return prediction result immediately
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'started': started,
+                        'y_pred': y_pred,
+                        'message': 'Your predictive analysis is running in the background. Results will be emailed to you shortly.'
+                    })
+
+            except subprocess.CalledProcessError as e:
+                error = e.stderr or "Prediction failed"
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': error
+                    }, status=400)
+
+        else:
+            print("POST data:", request.POST)
+            print("Form errors:", form.errors)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Form validation failed',
+                    'errors': form.errors
+                }, status=400)
+    else:
+        form = PredictForm()
+
+    return render(request, 'predict.html', {
+        'form': form,
+        "y_pred": y_pred,
+        "error": error,
+        "started": started,
+    })
+
 def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)

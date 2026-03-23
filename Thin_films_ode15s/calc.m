@@ -74,12 +74,78 @@ function calc( ...
         k_1 = 4.1672;
     end
 
+    %% CALCULATION OF DAMAGE THRESHOLD
+    Ep    = 0.2;
+    first = 1;
+
+    Ep1 = DAMAGE_THRESHOLD_loop_trial(Ep, L1, t_delay1, wavelength1, first, tp1, ...
+                                 material, material_substrate, t_max1);
+    Ep1 = 1.06 * Ep1;
+
     %% RUN THE CODES
     if   strcmp(material,'Au')==1 || strcmp(material,'Cu')==1 || strcmp(material,'Ag')==1 || strcmp(material,'Al')==1
         Code_for_all_metals_but_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material_substrate, L1);
-
     elseif  strcmp(material,'Cr')==1 || strcmp(material,'W')==1 ...
       || strcmp(material,'Mo')==1 || strcmp(material,'Ni')==1 || strcmp(material,'Steel')==1 || strcmp(material,'Ti')==1 || strcmp(material,'Pt')==1
         Code_for_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material_substrate, L1);
     end
+
+    %% CALCULATION OF LIPSS PERIODICITY BASED ON THE CALCULATION OF THE SYMMETRIC MODES
+    %% LIPSS Period vs Au Thin-Film Thickness (LR-SPP, exponential form)
+    % Based on S. A. Maier, "Plasmonics: Fundamentals and Applications", 2007
+
+    %% Constants
+    lambda0 =  wavelength1*1e-9;           % Laser wavelength (m)
+    k0 = 2*pi/lambda0;           % Free-space wavenumber
+
+    global E1_r E2_i
+    ta=find(E1_r==max(E1_r));
+    E2_refract=E1_r(ta(1))+1i*E2_i(ta(1));
+
+    % Dielectric function  (complex)
+    eps_m = E2_refract;
+
+    % Surroundings
+    eps1 = 1;      % Top dielectric (air)
+    eps2 = n_2^2;    % Bottom dielectric (substrate)
+
+    % %% Thickness
+    d = L1*1e-9;               % Convert to meters
+
+    %% fsolve options
+    opts = optimoptions('fsolve','Display','off','TolFun',1e-12,'TolX',1e-12);
+
+    %% Loop over thickness
+    % Exponential-form dispersion relation (Maier)
+    func = @(kx) exp(-2*d*sqrt(kx.^2 - eps_m*k0^2)) - ...
+        ( (sqrt(kx.^2 - eps_m*k0^2)*eps1 - sqrt(kx.^2 - eps1*k0^2)*eps_m) / ...
+          (sqrt(kx.^2 - eps_m*k0^2)*eps1 + sqrt(kx.^2 - eps1*k0^2)*eps_m) ) * ...
+        ( (sqrt(kx.^2 - eps_m*k0^2)*eps2 - sqrt(kx.^2 - eps2*k0^2)*eps_m) / ...
+          (sqrt(kx.^2 - eps_m*k0^2)*eps2 + sqrt(kx.^2 - eps2*k0^2)*eps_m) );
+
+    % Initial guess: single-interface SPP
+    kx0 = k0*sqrt(eps_m*eps1/(eps_m+eps1));
+
+    % Solve numerically
+    kx_sol = fsolve(func, kx0, opts);
+
+    % Compute LIPSS period (SP wavelength along interface)
+    Lambda_LR = 2*pi/real(kx_sol);
+
+    %% Convert to nm
+    Lambda_LR_nm = Lambda_LR*1e9;
+
+    cd (material)
+    fileID = fopen('Conditions_for_LIPSS_results.txt','a');
+    % fprintf(fileID, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% \n\n');
+    % fprintf(fileID, '\n');   % extra safety newline
+    % fprintf(fileID, '\n');   % extra safety newline
+    fprintf(fileID, 'Maximum Re(epsilon) of metal = %.4f\n', real(E2_refract));
+    fprintf(fileID, 'Maximum Im(epsilon) of metal  = %.4f\n', imag(E2_refract));
+    fprintf(fileID, 'Refractive index of substrate  = %.4f\n', n_2);
+    fprintf(fileID, 'LIPSS Periodicity (nm)  = %.4f\n', Lambda_LR_nm);
+
+    fclose(fileID);
+    cd('..')
+
 end

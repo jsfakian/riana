@@ -20,9 +20,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG')
 
 # Hosts and CSRF
-ALLOWED_HOSTS = ["147.52.71.221", "localhost", "192.168.1.23", "riana-hub.iesl.forth.gr"]
+ALLOWED_HOSTS = ["147.52.71.221", "localhost", "192.168.1.23", "plan-hub.iesl.forth.gr"]
 CSRF_TRUSTED_ORIGINS = [
-    'https://riana-hub.iesl.forth.gr',
+    'https://plan-hub.iesl.forth.gr',
 ]
 
 print(ALLOWED_HOSTS)

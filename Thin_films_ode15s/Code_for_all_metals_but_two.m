@@ -1,8 +1,8 @@
-function Code_for_all_metals_but_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material_substrate, L1)
+ function Code_for_all_metals_but_two(Ep1,wavelength1, tp1, t_delay1, t_max1, material, material_substrate, L1)
 
 %%
 
-global wavelength1 Ae BL n_2 k_2 stri Tmelt n_1 k_1 alpha1 break_code T_cr more_accurate
+global wavelength1 Ae BL n_2 k_2 stri Tmelt n_1 k_1 alpha1 break_code T_cr more_accurate  E1_r  E2_i
 
 %% Define Energy pulse, laser wavelength, pulse duration, thickness of the
 %%% material
@@ -179,7 +179,10 @@ end
      end 
  end 
 
-
+REFRACT_real=[N_1];
+REFRACT_imag=[K_1];
+ 
+ 
 [absorpt, reflectivity, transmissivity]=optical_parameters_plot(N_1,K_1, n_2, k_2, L1, wavelength);
 
 
@@ -212,6 +215,10 @@ end
                         DATA.Tmelt=Tmelt;
                         DATA.Tablation=0.95*T_cr;
                         DATA.ablated=depthofablatedpart;
+                        
+                           E1_r=REFRACT_real.^2-REFRACT_imag.^2;
+                            E2_i=2*REFRACT_real.*REFRACT_imag;
+                 
 
 % save('RESULTS.mat','DATA','-mat')
 
@@ -257,6 +264,8 @@ TL2=y(N1+N2+N1+1:N1+N2+N1+N2,1);
     material_parameters_constant(material);
  ke0=ke0_1; %J/(m*sec*K)
  CL_s=CL_s*rho_s;
+
+ 
  CL_l=CL_l*rho_l;
  
  
@@ -398,6 +407,7 @@ t_01=(2*REF_0)/(REF_1+REF_0);
 
 absorpt=1-reflectivity-1*transmissivity;
 
+
 if strcmp(material,'Ti')==1 | strcmp(material,'Steel')==1  | strcmp(material,'Pt')==1 
  
     ballistic=1/alpha1(1);
@@ -516,7 +526,7 @@ end
                        CE(q1)=polyval(p1,Te1(q1)); % to convert from J/(m^3*K) to  J/(microns^3*K);
                   end
    
-                   if q2>0
+                  if length(q2)>0
                     coupl_const(q2)=polyval(p4,Te1(q2));% to convert from W/(m^3*K) to  W/(microns^3*K)
                     CE(q2)=polyval(p2,Te1(q2)); % to convert from J/(m^3*K) to  J/(microns^3*K);
                     end
@@ -582,11 +592,11 @@ end
     
          for   i=2:N1-1
 
-              ke_iph = 1/2 * (ke1(i)) + ke1(i+1);
-              ke_imh = 1/2 * (ke1(i)) + ke1(i-1);
+              ke_iph = 1/2 * (ke1(i) + ke1(i+1));
+              ke_imh = 1/2 * (ke1(i) + ke1(i-1));
               
-        kL_iph = 1/2 * (kL1(i)) + kL1(i+1);
-         kL_imh = 1/2 * (kL1(i)) + kL1(i-1);
+        kL_iph = 1/2 * (kL1(i) + kL1(i+1));
+         kL_imh = 1/2 * (kL1(i) + kL1(i-1));
         
             
        dTe1_dt(i)=((ke_iph*(Te1(i+1)-Te1(i))-ke_imh*(Te1(i)-Te1(i-1)))/(dx1)^2-...
@@ -596,13 +606,12 @@ end
            coupl_const(i).*(Te1(i)-TL1(i)))./CL_S(i);
       
         end 
-        
-        
+      
        % upper material, upper surface , at i=1 
        i=1;
              
-       ke_iph = 1/2 * (ke1(i)) + ke1(i+1);
-        kL_iph = 1/2 * (kL1(i)) + kL1(i+1);
+       ke_iph = 1/2 * (ke1(i) + ke1(i+1));
+        kL_iph = 1/2 * (kL1(i) + kL1(i+1));
         
 dTe1_dt(1)=(ke_iph*(Te1(2)-Te1(i))/dx1^2- coupl_const(i).*(Te1(i)-TL1(i))+...
            Source1(i))./CE(i);
@@ -612,6 +621,7 @@ dTL1_dt(1)=(kL_iph*(TL1(2)-TL1(i))/dx1^2+ coupl_const(i).*(Te1(i)-TL1(i)))./CL_S
 %         dTL1_dt(1)=dTL1_dt(2);
 %  end 
 %           
+
           %upper material, back surface, at i=N1
           
           % to ensure that theta_Ke/Theta_e=0;theta_Te/Theta_e=0

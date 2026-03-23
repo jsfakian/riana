@@ -64,6 +64,31 @@ class RegisterForm(forms.ModelForm):
             self.add_error('password2', 'Passwords must match')
         return cleaned
 
+class PredictForm(forms.Form):
+    Material = forms.ChoiceField(label='Material', choices=[
+        ('Cr', 'Chromium'),
+        ('Ti', 'Titanium'),
+        ('Ni', 'Nickel'),
+        ('Au', 'Gold'),
+        ('Ag', 'Silver'),
+        ('Al', 'Aluminum'),
+        ('Cu', 'Copper'),
+        ('W', 'Tungsten'),
+        ('Pt', 'Platinum'),
+        ('Steel', 'Steel'),
+        ('Mo', 'Molybdenum'),
+    ])
+    thickness = forms.FloatField(
+        label='Thickness (nm)',
+        min_value=0.1, max_value=310,
+        help_text='Enter a value between 0.1 and 310'
+    )
+    pulse_sep = forms.FloatField(
+        label='Pulse Delay (ps)',
+        min_value=0, max_value=25,
+        help_text='Enter a value between 0 and 25'
+    )
+
 class CalcForm(forms.Form):
     Material = forms.ChoiceField(label='Material', choices=[
         ('Cr', 'Chromium'),
@@ -89,16 +114,6 @@ class CalcForm(forms.Form):
         min_value=10, max_value=1000,
         help_text='Enter a value between 10 and 1000'
     )
-    fluence = forms.FloatField(
-        label='Fluence (J/cm²)',
-        min_value=0.001, max_value=2,
-        help_text='Recommended value range between 0.001 and 2',
-        widget=forms.NumberInput(attrs={
-            'class': 'mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2',
-            'min': '0.001',
-            'step': '0.001',
-        })
-    )
     wavelength = forms.FloatField(
         label='Wavelength (nm)',
         min_value=248, max_value=15000,
@@ -106,8 +121,8 @@ class CalcForm(forms.Form):
     )
     pulse_dur = forms.FloatField(
         label='Pulse Duration (fs)',
-        min_value=100, max_value=500000,
-        help_text='Enter a value between 100 and 500000'
+        min_value=5, max_value=500000,
+        help_text='Enter a value between 5 and 500000'
     )
     pulse_sep = forms.FloatField(
         label='Pulse Separation (fs)',

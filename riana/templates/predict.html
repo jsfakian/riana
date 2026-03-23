@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Riana Predictor{% endblock %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-3xl font-semibold text-center mb-6">Prediction</h1>
+
+  {# — Show a banner if we've kicked off a background run — #}
+  <div id="job-started-banner" class="mb-6 p-4 rounded-lg bg-green-100 border border-green-200 text-green-800 hidden">
+    Your predictive analysis is running in the background - you'll receive a detailed email with the LIPSS analysis results when it's done.
+  </div>
+
+  {# — Show error message if prediction failed — #}
+  {% if error %}
+    <div class="mb-6 p-4 rounded-lg bg-red-100 border border-red-200 text-red-800">
+      <p class="font-semibold">Prediction Error</p>
+      <p>{{ error }}</p>
+    </div>
+  {% endif %}
+
+  <form id="predict-form" method="post" class="bg-white p-8 rounded-lg shadow-lg space-y-6">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Material</label>
+        {{ form.Material|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2" }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Thickness (nm)</label>
+        {{ form.thickness|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"min=10 max=1000 step=0.1"}}
+        {% if form.thickness.help_text %}<p class="text-xs text-gray-500">{{ form.thickness.help_text }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Pulse Delay (ps)</label>
+        {{ form.pulse_sep|add_class:"mt-1 block w-full bg-gray-100 border border-gray-300 rounded p-2"|attr:"min=0 max=500000 step=0.1"}}
+        {% if form.pulse_sep.help_text %}<p class="text-xs text-gray-500">{{ form.pulse_sep.help_text }}</p>{% endif %}
+      </div>
+    </div>
+
+    <button id="submit-btn" type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition" onclick="document.getElementById('job-started-banner').classList.remove('hidden')">
+      Run prediction
+    </button>
+  </form>
+</div>
+
+{% if y_pred %}
+<div class="bg-blue-50 p-4 rounded border border-blue-300 mt-6">
+  <p class="text-sm text-blue-700">
+    The predictive analysis is running in the background. You will receive a detailed email with the complete analysis results (material properties, dielectric functions, and LIPSS periodicity) shortly.
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}

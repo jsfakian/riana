@@ -11,11 +11,13 @@
   <!-- Navigation -->
   <nav class="bg-white shadow">
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <a href="/" class="flex items-center">
+      <!--a href="/" class="flex items-center">
         <img src="{{ MEDIA_URL }}logo.png" alt="Riana Logo" class="h-10">
-      </a>
+      </a-->
       <div class="space-x-4">
         {% if user.is_authenticated %}
+          <a href="{% url 'calc' %}" class="text-blue-600 hover:underline">Thermal calc</a>
+          <a href="{% url 'pred' %}" class="text-blue-600 hover:underline">Prediction</a>
           <a href="{% url 'manual' %}" class="text-blue-600 hover:underline">Manual</a>
           <a href="{% url 'contact' %}" class="text-blue-600 hover:underline">Contact</a>
           <a href="{% url 'logout' %}"  class="text-red-600 hover:underline">Logout</a>

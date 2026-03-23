@@ -122,9 +122,9 @@ elseif strcmp(material,'Au')==1
  CL_l=0.13*1000; % in J/(Kgr*K) %%%%%%%%%%%%SPECIFY%%%%%%%%%%%
  Ae=1*1e7; %s-1K=2;    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%approximately?
  BL=1.5e11 ; %s-1K-1;    %%%%%%%%%%%%%%%%%%%%%%%%%%%% approximatekly?
- ke0=21.9; %Jm-1s-1K-1;
+ ke0=170; %Jm-1s-1K-1;
  T_cr=15500; %K
- Tmelt=1941  ;% K
+ Tmelt=3695  ;% K
  
   elseif strcmp(material,'Ag')==1
     
