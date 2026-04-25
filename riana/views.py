@@ -213,7 +213,7 @@ def calc(request):
 
                 # Email
                 download_url = f"{base_url}{settings.MEDIA_URL}simulations/{user_id}/{tar_name}"
-                subject = 'Your Riana Simulation Results'
+                subject = 'Your Plan Simulation Results'
                 body    = (
                     f"Hello {username},\n\n"
                     "Your simulation has completed with these parameters:\n"
@@ -225,7 +225,7 @@ def calc(request):
                     f"  • Pulse Separation: {t_delay1} fs\n"
                     f"  • Max Time: {t_max1} ps\n\n"
                     f"Download your full results here:\n{download_url}\n\n"
-                    "Thank you for using Riana."
+                    "Thank you for using Plan."
                 )
                 EmailMessage(subject, body, to=[user_email]).send()
 
@@ -333,7 +333,7 @@ def predict(request):
                         filtered_output = '\n'.join(output_lines)
 
                         # Email
-                        subject = 'Your Riana Predictive Model Results'
+                        subject = 'Your Plan Predictive Model Results'
                         body    = (
                             f"Hello {username},\n\n"
                             "Your predictive model has been completed with the following parameters:\n"
@@ -343,19 +343,19 @@ def predict(request):
                             f"  • Predicted Damage Threshold (J/cm²): {Ep1}\n\n"
                             "Analysis Results:\n"
                             f"{filtered_output}\n\n"
-                            "Thank you for using Riana."
+                            "Thank you for using Plan."
                         )
                         EmailMessage(subject, body, to=[user_email]).send()
 
                     except subprocess.CalledProcessError as e:
                         # Send error email
-                        subject = 'Your Riana Predictive Model - Error'
+                        subject = 'Your plan Predictive Model - Error'
                         body    = (
                             f"Hello {username},\n\n"
                             "Unfortunately, there was an error processing your predictive model request:\n"
                             f"{e.stderr}\n\n"
                             "Please try again.\n\n"
-                            "Thank you for using Riana."
+                            "Thank you for using plan."
                         )
                         EmailMessage(subject, body, to=[user_email]).send()
 
@@ -420,7 +420,7 @@ def contact(request):
                 subject=f"[Contact] {cd['subject']}",
                 body=body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[settings.ADMIN_EMAIL],
+                to=settings.CONTACT_RECIPIENTS,
                 reply_to=[cd['email']],                # user's address in Reply-To
             )
             # Override the "From:"" header so it reads as from the user
